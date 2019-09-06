@@ -75,6 +75,9 @@ input_tensor 实际上是
 即【bs, F】 据说预处理过程中，每个样本开头都填充了一个 句子标记词【CLS】,
 这样transformer 编码过后 作为整个句子的 embedding; 
 
+```
+[CLS] and there burst on phil ##am ##mon ' s astonished eyes a vast semi ##ci ##rcle of blue sea [MASK] ring ##ed with palaces and towers [MASK] [SEP] like most of [MASK] fellow gold - seekers , cass was super ##sti [MASK] . [SEP]
+```
 然后直接做dense 成【bs, 2】得到logits;
 
 ```
