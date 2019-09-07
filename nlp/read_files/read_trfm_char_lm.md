@@ -31,3 +31,12 @@ For example Khandelwal et al. (2018) find that a word-based LSTM language model 
 
 ### 辅助损失3: Multiple Targets
 - At each position in the sequence, the model makes two (or more) predictions of future characters. For each new target we introduce a separate classifier. The losses of the extra targets get weighted by a multiplier of 0.5 before being added to their corresponding layer loss.
+
+### transformer-xl 对该文缺点的阐述：
+- 对于单个样本没啥问题：
+	- X: [w, h, o, s]
+	- Y: [e]
+- 可是如果 以一整篇文章的角度看，缺点两个：
+	- 1。 不尊重 句子边界，可能真个句子都被打散了；
+	- 2。 trfm 虽然可以多远都能看到，但是前提是 不超过len(X)这么长，当你把一篇文章打散（在language model 中 构建样本时候 这尤其自然），对于文章中段，任意单个样本，不可能看到更早的样本；
+
