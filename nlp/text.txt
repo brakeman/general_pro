@@ -1,8 +1,0 @@
-1. word2vec -- 关联关系 + 负采样 == 无监督embedding;
-2. 字符级嵌入 -- 有效消除掉ukn words; 
-3. ner -- lstm + crf; 
-4. Doc2Vec 的思想: 句子idx 作为fake word 嵌入整个句子的信息；
-5. 多任务多损失
-6. transformer
-7. seq2seq 
-7. 聊天机器人 
