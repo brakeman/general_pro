@@ -105,3 +105,6 @@ def get_next_sentence_output(bert_config, input_tensor, labels):
 
 ```
 
+### Bert 缺点
+[are, mask1, OK, mask2]
+注意Bert 的语言模型任务是基于对输入的mask, 缺点也在这里， 对于【are u ok ?】这个句子，两个被mask 的词的预测，经过trfm 编码器 实际上 是独立预测的， 即P（mask1|are, ok, mask2）能瞅到的只是mask2, 而不是实际上的问号， 同理p(mask2|are, ok, mask1)也是如此；  
