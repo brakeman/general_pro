@@ -16,7 +16,7 @@
 	- 双流transformer 架构
 	- mask 矩阵trick
 	- 相对位置编码
-		![Drag Racing](../imgs/xl_rel_pos.jpg)
+		![Drag Racing](./imgs/xl_rel_pos.jpg)
 - xl_net 源码阅读
 - 关于新颖的样本间 记忆机制；
 	- 从源码看 记忆在样本间传播; 
