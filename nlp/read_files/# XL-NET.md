@@ -107,7 +107,7 @@
 	                                          
 	output_h, output_g = self.two_stream_rel_attn(  
 	    h=output_h,   # 代表 lookup_table(inp_k)【ts,bs,F】
-	    g=output_g,  # 代表self.mask_emb.repeat(target_mapping.shape[0], bsz, 1) 
+	    g=output_g,  # 之所以叫mask_emb 是因为它就是代表【mask】这个query 词啊；代表self.mask_emb.repeat(target_mapping.shape[0], bsz, 1) 
 	                 ## target_mapping: float32 Tensor in shape [num_predict, len, bsz].  
 	                 ## If target_mapping[i, j, k] = 1, the i-th predict in batch k is on the j-th token.
 	    r=pos_emb,  
