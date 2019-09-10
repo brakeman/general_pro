@@ -43,6 +43,8 @@
 	- data_mask = perm_mask
 	- attn_mask += data_mask[:, :, :, None]
 	- attn_mask = attn_mask.gt(0)
+
+		![Drag Racing](./imgs/local_perm.jpg)
 - non_tgt_mask
 	- non_tgt_mask = -torch.eye(qlen, dtype=torch.float32) # [qlen, qlen]  
     - non_tgt_mask = torch.cat([torch.zeros([qlen, mlen], dtype=torch.float32),non_tgt_mask], dim=-1)  # ts=0的时候，mlen=0, 故没有任何操作；
