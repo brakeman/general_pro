@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 from torch.nn import functional as F
+from typing import List
 
 
 class MultiHeadAttention(nn.Module):
@@ -42,3 +43,19 @@ class Encoder(nn.Module):
             output = self.multihead(q=init, k=init, v=init)  # 【bs, ts, f】
             init = self.layer_norm(output + init)
         return init
+
+
+class TRFM(nn.Module):
+
+    def __init__(self, num_uniq_leaf: int, dim_leaf_emb: int, num_heads: int,
+                 dim_q_k: int, dim_v: int, dim_m: int, dropout: float):
+        self.Encoder = Encoder(num_heads, dim_q_k, dim_v, dim_m, dropout)
+        self.Emb = nn.Embedding(num_uniq_leaf, dim_leaf_emb)
+        self.tobinary = nn.Linear(dim_m, 1)
+
+    def forward(self, input_leaf_seq: List, layers: int) -> float:
+        # input_leaf_seq: bs, ts; 代表叶子序号，例如总共3000个树，每个3个叶子，那么总共9000个独特的叶子；
+        # 样本即叶子序列with shape: [bs, 3000];
+        enc_in = self.Emb(input_leaf_seq)  # [bs, 3000, emb_dim]
+        enc_out = self.Encoder(enc_in)
+        return F.sigmoid(self.tobinary(enc_out)) #  [bs, 1]
