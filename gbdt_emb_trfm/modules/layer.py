@@ -49,6 +49,13 @@ class TRFM(nn.Module):
 
     def __init__(self, num_uniq_leaf: int, dim_leaf_emb: int, num_heads: int,
                  dim_q_k: int, dim_v: int, dim_m: int, dropout: float):
+        # num_uniq_leaf = num_leaf_per_tree * num_trees + 1 ;
+        # dim_leaf_emb: embbeding dim;
+        # num_heads: trfm para;
+        # dim_q_k: trfm para;
+        # dim_v: trfm para;
+        # dim_m: input & output tensor final dim length;
+        assert dim_m == dim_leaf_emb
         self.Encoder = Encoder(num_heads, dim_q_k, dim_v, dim_m, dropout)
         self.Emb = nn.Embedding(num_uniq_leaf, dim_leaf_emb)
         self.tobinary = nn.Linear(dim_m, 1)
@@ -58,4 +65,4 @@ class TRFM(nn.Module):
         # 样本即叶子序列with shape: [bs, 3000];
         enc_in = self.Emb(input_leaf_seq)  # [bs, 3000, emb_dim]
         enc_out = self.Encoder(enc_in)
-        return F.sigmoid(self.tobinary(enc_out)) #  [bs, 1]
+        return F.sigmoid(self.tobinary(enc_out))# [bs, 1]
