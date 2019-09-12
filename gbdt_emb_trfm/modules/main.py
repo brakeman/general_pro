@@ -1,20 +1,20 @@
-from modules.data import train_val_test_split
+from modules.data import train_val_test_split, CbData
 from modules.layer import TRFM
 import tqdm
 import torch
-from torchnet import meter
+# from torchnet import meter
 
 
 class GbdtTrfm:
-    def __init__(self, gbdt_model, num_trees, leaf_num_per_tree, full_dataset):
+    def __init__(self, gbdt_model, num_trees, leaf_num_per_tree, root_dir='/data-0/qibo/ctx_6W_data/'):
         self.gbdt_model = gbdt_model
         self.num_trees = num_trees
         self.leaf_num_per_tree = leaf_num_per_tree
-        self.full_dataset = full_dataset
+        self.full_dataset  = CbData(root_dir, num_trees=num_trees, leaf_num_per_tree=leaf_num_per_tree, gbdt_model=gbdt_model)
 
     def val_epoch(self):
         pass
-    
+
     def train_epoch(self, train_loader, device, optimizer, criterion, model):
         for ii, (data, label) in tqdm(enumerate(train_loader)):
             # train model
