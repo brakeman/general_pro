@@ -2,3 +2,4 @@
 - 2. 需要看看它断点操作
 - 3. 需要lr decay 
 - 4. 需要batch norm
+- 5. eisum
