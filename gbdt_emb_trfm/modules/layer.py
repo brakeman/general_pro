@@ -45,6 +45,8 @@ class Encoder(nn.Module):
         init = encoder_inputs  # [bs, ts ,f]
         for _ in range(self.layers + 1):
             output = self.multihead(q=init, k=init, v=init)  # 【bs, ts, f】
+            output = self.layer_norm(output)
+            output = self.multihead(q=output, k=output, v=output)
             init = self.layer_norm(output + init)
         return init
 

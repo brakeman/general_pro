@@ -22,6 +22,7 @@ class GbdtTrfm:
         self.criterion = nn.CrossEntropyLoss()
 
     def train(self, epoch, batch_size, lr):
+        torch.backends.cudnn.enabled = False  # RAM leak;
         full_train_loader, train_loader, val_loader, test_loader = train_val_test_split(self.full_dataset,
                                                                                         batch_size,
                                                                                         self.pre_defined_idx,
