@@ -1,3 +1,5 @@
+# 1. 修改了 val_loader & test_loader 的 batch size, 因为一个中间变量是 bs*ts*F 这么大，如果full batch 去评估，5000*5000*16 这个中间变量太大了; 不可忍受；
+# 2. 修改了another_train_loader， 避免使用full_train_loader, 同样理由；
 import pandas as pd
 import numpy as np
 import torch
@@ -54,16 +56,14 @@ def train_val_test_split(dataset, bs_train, pre_defined_idx, val_split=0.8, test
     train_sampler = SubsetRandomSampler(train_idx)
     valid_sampler = SubsetRandomSampler(val_idx)
     test_sampler = SubsetRandomSampler(test_idx)
-    bs_val = len(val_idx)
-    bs_test = len(test_idx)
     train_loader = torch.utils.data.DataLoader(dataset, bs_train, sampler=train_sampler)
-    val_loader = torch.utils.data.DataLoader(dataset, bs_val, sampler=valid_sampler)
-    test_loader = torch.utils.data.DataLoader(dataset, bs_test, sampler=test_sampler)
-    full_train_loader = torch.utils.data.DataLoader(dataset, len(train_idx), sampler=train_sampler)
+    val_loader = torch.utils.data.DataLoader(dataset, bs_train, sampler=valid_sampler)
+    test_loader = torch.utils.data.DataLoader(dataset, bs_train, sampler=test_sampler)
+    another_train_loader = torch.utils.data.DataLoader(dataset, bs_train, sampler=train_sampler)
     print('len_train:{}, len_val:{}, len_test:{}'.format(len(train_idx), len(val_idx), len(test_idx)))
     if return_idx:
-        return full_train_loader, train_loader, val_loader, test_loader, (train_idx, val_idx, test_idx)
-    return full_train_loader, train_loader, val_loader, test_loader
+        return another_train_loader, train_loader, val_loader, test_loader, (train_idx, val_idx, test_idx)
+    return another_train_loader, train_loader, val_loader, test_loader
 
 
 class CbData(Dataset):

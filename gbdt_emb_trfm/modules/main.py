@@ -1,10 +1,13 @@
+# 添加with with torch.no_grad(), model.eval()
+# 添加numpy 求均值损失
 from modules.data import train_val_test_split, CbData
 from modules.layer import TRFM
 from modules.auc import roc_auc_compute
-from tqdm import tqdm
 import torch
 import torch.nn as nn
+import numpy as np
 import warnings
+
 warnings.filterwarnings("ignore")
 
 
@@ -17,52 +20,72 @@ class GbdtTrfm:
         self.num_trees = self.full_dataset.num_trees
         self.leaf_num_per_tree = self.full_dataset.leaf_num_per_tree
         self.device = device
-        self.model = TRFM(num_uniq_leaf=self.num_trees*self.leaf_num_per_tree+1, dim_leaf_emb=32, num_heads=8,
-                          dim_q_k=100, dim_v=200, dim_m=32, layers=6, dropout=0.3).to(device)
-        self.criterion = nn.CrossEntropyLoss()
+        self.model = TRFM(num_uniq_leaf=self.num_trees * self.leaf_num_per_tree + 1, dim_leaf_emb=16, num_heads=3,
+                          dim_q_k=20, dim_v=20, dim_m=16, layers=3, dropout=0.3).to(device)
+
+        self.criterion = nn.BCELoss()
 
     def train(self, epoch, batch_size, lr):
-        torch.backends.cudnn.enabled = False  # RAM leak;
-        full_train_loader, train_loader, val_loader, test_loader = train_val_test_split(self.full_dataset,
-                                                                                        batch_size,
-                                                                                        self.pre_defined_idx,
-                                                                                        return_idx=False)
+        another_train_loader, train_loader, val_loader, test_loader = train_val_test_split(self.full_dataset,
+                                                                                           batch_size,
+                                                                                           self.pre_defined_idx,
+                                                                                           return_idx=False)
         optimizer = torch.optim.SGD(self.model.parameters(), lr=lr)
         for epoch_id in range(epoch):
-            self._train_epoch(train_loader, optimizer)
-            self._val_epoch(epoch_id, full_train_loader, val_loader)
+            self._train_epoch(epoch_id, train_loader, another_train_loader, val_loader, optimizer)
 
-    def _val_epoch(self, epoch_id, full_train_loader, valid_loader):
-        train_auc, train_loss, val_auc, val_loss = None, None, None, None
-        for data in tqdm(full_train_loader):
-            inputs = data['x'].to(self.device)
-            target = data['y'].to(self.device)
-            logits = self.model(inputs)
-            train_loss = self.criterion(logits, target)
-            train_auc = roc_auc_compute(target, logits)
-
-        for data in tqdm(valid_loader):
-            inputs = data['x'].to(self.device)
-            target = data['y'].to(self.device)
-            logits = self.model(inputs)
-            val_loss = self.criterion(logits, target)
-            val_auc = roc_auc_compute(target, logits)
-            print('epoch_num:{} train_loss:{} train_auc:{} valid:loss:{} valid_auc:{}'.format(epoch_id, train_loss,
-                                                                                              train_auc, val_loss,
-                                                                                              val_auc))
-
-    def _train_epoch(self, train_loader, optimizer):
-        epoch_loss = []
-        for data in tqdm(train_loader):
+    def _train_epoch(self, epoch_id, train_loader, another_train_loader, valid_loader, optimizer):
+        for batch_idx, data in enumerate(train_loader):
             inputs = data['x'].to(self.device)
             target = data['y'].to(self.device)
             optimizer.zero_grad()
             score = self.model(inputs)
-            loss = self.criterion(score, target)
-            # print('epoch_num:{} batch_num:{} batch_loss:{}'.format(epoch_idx, ii, loss))
-            epoch_loss.append(loss)
+            loss = self.criterion(score, target.float())
+            if batch_idx % 10 == 0:
+                self._val_epoch(epoch_id, batch_idx, another_train_loader, valid_loader)
             loss.backward()
             optimizer.step()
+
+    def _val_epoch(self, epoch_id, batch_idx, another_train_loader, valid_loader):
+        self.model.eval()
+        with torch.no_grad():
+            Train_Targets = []
+            Train_Logits = []
+            Train_Loss = []
+            for idx, data in enumerate(another_train_loader):
+                inputs = data['x'].to(self.device)
+                target = data['y'].to(self.device)
+                logits = self.model(inputs)
+                val_loss = self.criterion(logits, target.float())
+                Train_Targets.append(target)
+                Train_Logits.append(logits)
+                Train_Loss.append(val_loss.tolist())
+                if idx == 8:
+                    break
+            train_loss = np.mean(Train_Loss)
+            train_auc = roc_auc_compute(torch.cat(Train_Targets), torch.cat(Train_Logits))
+
+            Targets = []
+            Logits = []
+            Loss = []
+            for idx, data in enumerate(valid_loader):
+                inputs = data['x'].to(self.device)
+                target = data['y'].to(self.device)
+                logits = self.model(inputs)
+                val_loss = self.criterion(logits, target.float())
+                Targets.append(target)
+                Logits.append(logits)
+                Loss.append(val_loss.tolist())
+                if idx == 8:
+                    break
+            val_loss = np.mean(Loss)
+            val_auc = roc_auc_compute(torch.cat(Targets), torch.cat(Logits))
+        print('epoch_num:{} batch_num:{} train_loss:{} train_auc:{} valid:loss:{} valid_auc:{}'.format(epoch_id,
+                                                                                                       batch_idx,
+                                                                                                       train_loss,
+                                                                                                       train_auc,
+                                                                                                       val_loss,
+                                                                                                       val_auc))
 
     def predict(self, data_loader):
         pass

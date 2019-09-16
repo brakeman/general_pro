@@ -1,3 +1,4 @@
+# 1. 添加了MultiHeadAttentionSmall 类 '不用dense的方式去制造qs, ks, vs'
 import torch
 import torch.nn as nn
 from torch.nn import functional as F
@@ -5,11 +6,12 @@ from typing import List
 
 
 class MultiHeadAttention(nn.Module):
+    'dense 的方式制造qs, ks, vs'
 
     def __init__(self, num_heads, dim_q_k, dim_v, dim_m, dropout):
         super(MultiHeadAttention, self).__init__()
         self.num_heads = num_heads
-        self.dim_q_k = dim_q_k  # Q,K 公用一个DENSE维度，因为要在这个轴上做att, 才能构造【ts,ts】的矩阵；
+        self.dim_q_k = dim_q_k  # Q,K 公用一个DENSE维度，因为要在这个轴上做att, 才能构造【ts, ts】的矩阵；
         self.dim_v = dim_v  # V 没什么约束；
         self.d_m = dim_m  # 这个一般要和输入维度保持一致，可以多层叠；
         self.dropout = dropout
@@ -32,12 +34,42 @@ class MultiHeadAttention(nn.Module):
         return self.dropoutLayer(F.relu(self.ffn(output)))  # [bs, ts, F]
 
 
+class MultiHeadAttentionSmall(nn.Module):
+    '不用dense的方式去制造qs, ks, vs'
+
+    def __init__(self, num_heads, dim_m, dropout):
+        super(MultiHeadAttentionSmall, self).__init__()
+        assert dim_m % num_heads == 0
+        self.num_heads = num_heads
+        self.dropout = dropout
+        self.ffn = nn.Linear(dim_m, dim_m)
+        self.dropoutLayer = nn.Dropout(p=dropout)
+
+    def forward(self, q, k, v):
+        bs, ts, fq = q.size()
+        _, _, fk = k.size()
+        _, _, fv = v.size()
+        assert fq % self.num_heads == 0
+        assert fk % self.num_heads == 0
+        assert fv % self.num_heads == 0
+        qs = F.relu(q.view(bs, ts, self.num_heads, fq // self.num_heads))
+        ks = F.relu(k.view(bs, ts, self.num_heads, fk // self.num_heads))
+        vs = F.relu(v.view(bs, ts, self.num_heads, fv // self.num_heads))
+        att_mat = torch.einsum('bthf,byhf->bhty', qs, ks)  # qs: [bs ts head, F], ks:[bs, ts2(即h), head, F]
+        att_mat = F.softmax(att_mat / ((fq // self.num_heads) ** 0.5), dim=-1)
+        output = torch.einsum('bhty,byhf->bhtf', att_mat, vs)  # [bs, head, ts, F]
+        output = output.view(bs, ts, -1)  # [bs, ts, head*dim_v]
+        return self.dropoutLayer(F.relu(self.ffn(output)))  # [bs, ts, F]
+
+
 class Encoder(nn.Module):
 
-    def __init__(self, num_heads, dim_q_k, dim_v, dim_m, layers, dropout):
-        print('num_head_encoder:{}'.format(num_heads))
+    def __init__(self, num_heads, dim_q_k, dim_v, dim_m, layers, dropout, small=False):
         super(Encoder, self).__init__()
-        self.multihead = MultiHeadAttention(num_heads, dim_q_k, dim_v, dim_m, dropout=dropout)
+        if small == False:
+            self.multihead = MultiHeadAttention(num_heads, dim_q_k, dim_v, dim_m, dropout=dropout)
+        else:
+            self.multihead = MultiHeadAttentionSmall(num_heads, dim_m, dropout)
         self.layer_norm = nn.LayerNorm(dim_m)
         self.layers = layers
 
@@ -72,4 +104,5 @@ class TRFM(nn.Module):
         # 样本即叶子序列with shape: [bs, 3000];
         enc_in = self.Emb(input_leaf_seq)  # [bs, 3000, emb_dim]
         enc_out = self.Encoder(enc_in)
-        return F.sigmoid(self.tobinary(enc_out))  # [bs, 1]
+        out = F.sigmoid(self.tobinary(enc_out[:, 0, :]))  # [bs, 1]
+        return out
