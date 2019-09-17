@@ -1,5 +1,5 @@
 from FM.data import CbData, train_val_test_split
-from FM.layers import WideDeep
+from FM.layers import WideDeep, DeepFM, NFM, DeepCross
 from FM.utils import roc_auc_compute
 import torch
 import torch.nn as nn
@@ -11,7 +11,7 @@ warnings.filterwarnings("ignore")
 class Main:
 
     def __init__(self, gbdt_model, pre_defined_idx, device, root_dir, emb_size, model='WideDeep'):
-        assert model in ['WideDeep']
+        assert model in ['WideDeep', 'DeepFM', 'NFM', 'DeepCross']
         self.gbdt_model = gbdt_model
         self.pre_defined_idx = pre_defined_idx  # 更训练gbdt 时的样本保持一致；相同的train,val,test;
         self.full_dataset = CbData(root_dir, add_CLS=False, gbdt_model=gbdt_model)
@@ -20,6 +20,14 @@ class Main:
         self.device = device
         if model == 'WideDeep':
             self.model = WideDeep(self.leaf_num_per_tree * self.num_trees, self.num_trees, emb_size).to(device)
+        elif model == 'DeepFM':
+            self.model = DeepFM(self.leaf_num_per_tree * self.num_trees, self.num_trees, emb_size).to(device)
+        elif model == 'NFM':
+            self.model = NFM(self.leaf_num_per_tree * self.num_trees, emb_size).to(device)
+        elif model == 'DeepCross':
+            self.model = DeepCross(self.leaf_num_per_tree * self.num_trees, self.num_trees, emb_size, num_layers=1).to(
+                device)
+
         self.criterion = nn.BCELoss()
 
     def train(self, epoch, batch_size, lr):
@@ -33,19 +41,21 @@ class Main:
 
     def _train_epoch(self, epoch_id, train_loader, another_train_loader, valid_loader, test_loader, optimizer):
         for batch_idx, data in enumerate(train_loader):
-            inputs = data['x'].to(self.device)
-            target = data['y'].to(self.device)
-            optimizer.zero_grad()
-            score = self.model(inputs)
-            loss = self.criterion(score, target.float())
-            if batch_idx % 10 == 0:
-                self._val_epoch(batch_idx, another_train_loader, valid_loader, test_loader)
-            loss.backward()
-            optimizer.step()
+            with autograd.detect_anomaly():
+                inputs = data['x'].to(self.device)
+                target = data['y'].to(self.device)
+                optimizer.zero_grad()
+                score = self.model(inputs)
+                loss = self.criterion(score, target.float())
+                if batch_idx % 10 == 0:
+                    self._val_epoch(epoch_id, batch_idx, another_train_loader, valid_loader, test_loader)
+                loss.backward()
+                optimizer.step()
 
-    def _val_epoch(self, batch_idx, another_train_loader, valid_loader, test_loader):
+    def _val_epoch(self, epoch_id, batch_idx, another_train_loader, valid_loader, test_loader):
         self.model.eval()
         with torch.no_grad():
+            train_auc, train_loss, val_auc, val_loss = None, None, None, None
             Train_Targets = []
             Train_Logits = []
             Train_Loss = []
@@ -94,7 +104,8 @@ class Main:
             test_loss = np.mean(Test_Loss)
             test_auc = roc_auc_compute(torch.cat(Test_Targets), torch.cat(Test_Logits))
 
-        print('--------------------------------batch_num:{}----------------------------------------'.format(batch_idx))
+        print(
+            '\n--------------------------------batch_num:{}----------------------------------------'.format(batch_idx))
         print('train_loss:{}  valid:loss:{} test_loss:{}\ntrain_auc:{} valid_auc:{}  test_auc:{}'.format(train_loss,
                                                                                                          val_loss,
                                                                                                          test_loss,

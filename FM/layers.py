@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 from torch.nn import functional as F
+from torch.nn import Parameter, init
 
 
 class WideDeep(nn.Module):
@@ -38,7 +39,7 @@ class DeepFM(nn.Module):
         self.deep2 = nn.Linear(dim_leaf_emb // 2, dim_leaf_emb // 4)
         #         in_dim = (dim_leaf_emb//4)*num_trees +
         # self.deep3 = nn.Linear(num_trees * dim_leaf_emb // 4, num_trees * dim_leaf_emb // 8)
-        self.ffn = nn.Linear(532983, 1)  # to do;
+        self.ffn = nn.Linear(532983, 1)  # to do
         assert num_trees * dim_leaf_emb // 4 >= 2
 
     def _get_tri_idx(self, rank):
@@ -66,38 +67,8 @@ class DeepFM(nn.Module):
 
 class NFM(nn.Module):
 
-
     def __init__(self, num_uniq_leaf, dim_leaf_emb):
         super(NFM, self).__init__()
-        self.Emb = nn.Embedding(num_uniq_leaf, dim_leaf_emb)
-        self.deep1 = nn.Linear(dim_leaf_emb, dim_leaf_emb // 2)
-        self.deep2 = nn.Linear(dim_leaf_emb // 2, dim_leaf_emb // 4)
-        # self.deep3 = nn.Linear(num_trees * dim_leaf_emb // 4, num_trees * dim_leaf_emb // 8)
-        self.ffn = nn.Linear(dim_leaf_emb//4, 1)
-        assert dim_leaf_emb // 4 >= 2
-
-    def _BIP(self, z):
-        assert len(z.size()) == 3  # [bs, ts, F]
-        sum_square = z.sum(dim=1)**2  # [bs, F]
-        square_sum = z**2
-        square_sum = square_sum.sum(dim=1)  # [bs, F]
-        return (sum_square - square_sum) / 2  # [bs, F]
-
-    def forward(self, x):
-        'x: bs, num_trees'
-        x = self.Emb(x)  # bs, num_trees, F
-        x = self._BIP(x)  # bs, F
-        x = F.relu(self.deep1(x))
-        x = F.relu(self.deep2(x))
-        logits = F.sigmoid(self.ffn(x))
-        return logits
-
-
-class DeepCross(nn.Module):
-
-
-    def __init__(self, num_uniq_leaf, dim_leaf_emb):
-        super(DeepCross, self).__init__()
         self.Emb = nn.Embedding(num_uniq_leaf, dim_leaf_emb)
         self.deep1 = nn.Linear(dim_leaf_emb, dim_leaf_emb // 2)
         self.deep2 = nn.Linear(dim_leaf_emb // 2, dim_leaf_emb // 4)
@@ -117,6 +88,53 @@ class DeepCross(nn.Module):
         x = self.Emb(x)  # bs, num_trees, F
         x = self._BIP(x)  # bs, F
         x = F.relu(self.deep1(x))
+        x = F.relu(self.deep2(x))
+        logits = F.sigmoid(self.ffn(x))
+        return logits
+
+
+class DeepCross(nn.Module):
+
+    def __init__(self, num_uniq_leaf, num_trees, dim_leaf_emb, num_layers):
+        super(DeepCross, self).__init__()
+        self.Emb = nn.Embedding(num_uniq_leaf, dim_leaf_emb)
+
+        self.layer_paras = []
+        for i in range(num_layers):
+            weight = Parameter(torch.Tensor(dim_leaf_emb * num_trees, 1))
+            init.xavier_uniform(weight)
+            bias = Parameter(torch.Tensor(1))
+            self.layer_paras.append((weight, bias))
+
+        self.deep1 = nn.Linear(dim_leaf_emb * num_trees, dim_leaf_emb // 2)
+        self.deep2 = nn.Linear(dim_leaf_emb // 2, dim_leaf_emb // 4)
+        self.ffn = nn.Linear(dim_leaf_emb // 4, 1)
+        assert dim_leaf_emb // 4 >= 2
+
+    def _cross_layer(self, x0, x, w, b, bias=False):
+        assert len(x.size()) == 2
+        assert len(x0.size()) == 2
+        if bias:
+            xw = x @ w + b  # [bs, 1]
+        else:
+            xw = x @ w  # [bs, 1]
+        return x0 * xw  # [bs, F]
+
+    def forward(self, x):
+        'x: bs, num_trees'
+        x = self.Emb(x)  # bs, num_trees, F
+        bs, _, _ = x.size()
+        x0 = x.view(bs, -1)  # bs, num_trees*F
+        #### cross & residual layer;
+        temp_x = x0
+        for layer, paras in enumerate(self.layer_paras):
+            cross_x = self._cross_layer(x0, temp_x, paras[0], paras[1])  # [bs,F]
+            if layer % 2 == 0:
+                temp_x = temp_x + cross_x
+            else:
+                temp_x = cross_x
+
+        x = F.relu(self.deep1(temp_x))
         x = F.relu(self.deep2(x))
         logits = F.sigmoid(self.ffn(x))
         return logits
