@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import itertools
 from torch.nn import functional as F
 from torch.nn import Parameter, init
 
@@ -138,3 +139,50 @@ class DeepCross(nn.Module):
         x = F.relu(self.deep2(x))
         logits = F.sigmoid(self.ffn(x))
         return logits
+
+# 排列组合操作爆炸 itertools.combinations(idx, 2)
+class AFM(nn.Module):
+
+    def __init__(self, num_uniq_leaf, num_trees, dim_leaf_emb):
+        super(AFM, self).__init__()
+        self.Emb = nn.Embedding(num_uniq_leaf, dim_leaf_emb)
+        self.deep1 = nn.Linear(dim_leaf_emb, dim_leaf_emb // 2)
+        self.deep2 = nn.Linear(dim_leaf_emb // 2, dim_leaf_emb // 4)
+        att_dim =  dim_leaf_emb//2
+        self.W = Parameter(torch.Tensor(dim_leaf_emb, att_dim))
+        self.b = Parameter(torch.Tensor(att_dim))
+        self.h = Parameter(torch.Tensor(att_dim))
+        init.xavier_uniform(self.W)
+        # self.deep3 = nn.Linear(num_trees * dim_leaf_emb // 4, num_trees * dim_leaf_emb // 8)
+        self.ffn = nn.Linear(dim_leaf_emb // 4, 1)
+        assert dim_leaf_emb // 4 >= 2
+
+
+    def _half_BIP(self, x, axis):
+        'nbnb'
+        idx = range(0, x.shape[axis])
+        row, col = zip(*itertools.combinations(idx, 2)) # ts+1)*ts/2
+        return x[:, row] * x[:, col]
+
+    # 还是不行，不是一个变量大，是由于ts' 超级大， 所以后面每一个变量都贼几把大。
+    def forward(self, x):
+        'x: bs, num_trees'
+        x = self.Emb(x)  # bs, num_trees, F
+        half_bip = self._half_BIP(x, axis=1)  # bs, ts', F
+        x = F.relu(half_bip@self.W + self.b)  # [bs, ts', F2]
+        att = F.softmax(x@self.h, dim=-1)  # [bs, ts']
+        out = half_bip*att[:,:,None]  # [bs, ts', F]
+        out = out.sum(dim=1)  # [bs, F]
+        out = F.relu(self.deep1(out)) # bs, F2
+        out = F.relu(self.deep2(out))
+        logits = F.sigmoid(self.ffn(out))
+        return logits
+
+
+class xDeepFM(nn.Module):
+
+    def __init__(self, num_uniq_leaf, num_trees, dim_leaf_emb):
+        super(xDeepFM, self).__init__()
+
+    def cin_layer(self):
+        return

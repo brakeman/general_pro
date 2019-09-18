@@ -1,23 +1,26 @@
-from FM.data import CbData, train_val_test_split
-from FM.layers import WideDeep, DeepFM, NFM, DeepCross
+from FM.data import CbData, train_val_test_split, CbData_test
+from FM.layers import WideDeep, DeepFM, NFM, DeepCross, AFM
 from FM.utils import roc_auc_compute
 import torch
+from torch import autograd
 import torch.nn as nn
 import numpy as np
 import warnings
+from sklearn.metrics import roc_auc_score
 warnings.filterwarnings("ignore")
 
 
 class Main:
 
-    def __init__(self, gbdt_model, pre_defined_idx, device, root_dir, emb_size, model='WideDeep'):
-        assert model in ['WideDeep', 'DeepFM', 'NFM', 'DeepCross']
+    def __init__(self, gbdt_model, pre_defined_idx, device, root_dir, emb_size, model_save_dir, model='WideDeep'):
+        assert model in ['WideDeep', 'DeepFM', 'NFM', 'DeepCross', 'AFM']
         self.gbdt_model = gbdt_model
         self.pre_defined_idx = pre_defined_idx  # 更训练gbdt 时的样本保持一致；相同的train,val,test;
         self.full_dataset = CbData(root_dir, add_CLS=False, gbdt_model=gbdt_model)
         self.num_trees = self.full_dataset.num_trees
         self.leaf_num_per_tree = self.full_dataset.leaf_num_per_tree
         self.device = device
+        self.model_save_dir = model_save_dir
         if model == 'WideDeep':
             self.model = WideDeep(self.leaf_num_per_tree * self.num_trees, self.num_trees, emb_size).to(device)
         elif model == 'DeepFM':
@@ -27,8 +30,26 @@ class Main:
         elif model == 'DeepCross':
             self.model = DeepCross(self.leaf_num_per_tree * self.num_trees, self.num_trees, emb_size, num_layers=1).to(
                 device)
-
+        elif model == 'AFM':
+            self.model = AFM(self.leaf_num_per_tree * self.num_trees, self.num_trees, emb_size).to(device)
         self.criterion = nn.BCELoss()
+
+    def predict(self, new_x, load_path=None):
+        if load_path is not None:
+            model = torch.load(load_path)
+        else:
+            model = self.model
+        model.eval()
+        new_x_da = CbData_test(new_x, self.gbdt_model)
+        loader = torch.utils.data.DataLoader(new_x_da, len(new_x_da))
+        for x in loader:
+            inp = x['x']
+            logits = model(inp)
+        return logits
+
+    def eval_(self, x, y):
+        logits = self.predict(x)
+        return roc_auc_score(y, logits.detach().numpy().flatten())
 
     def train(self, epoch, batch_size, lr):
         another_train_loader, train_loader, val_loader, test_loader = train_val_test_split(self.full_dataset,
@@ -37,7 +58,12 @@ class Main:
                                                                                            return_idx=False)
         optimizer = torch.optim.SGD(self.model.parameters(), lr=lr)
         for epoch_id in range(epoch):
-            self._train_epoch(epoch_id, train_loader, another_train_loader, val_loader, test_loader, optimizer)
+            valid_auc = self._train_epoch(epoch_id, train_loader, another_train_loader, val_loader, test_loader,
+                                          optimizer)
+            torch.save(self.model, self.model_save_dir + 'epoch_{}_valid_auc:{}'.format(epoch_id, valid_auc))
+            print('model with valid_acu {} saved as {}'.format(valid_auc,
+                                                               self.model_save_dir + 'epoch_{}_valid_auc:{}'.format(
+                                                                   epoch_id, valid_auc)))
 
     def _train_epoch(self, epoch_id, train_loader, another_train_loader, valid_loader, test_loader, optimizer):
         for batch_idx, data in enumerate(train_loader):
@@ -48,9 +74,10 @@ class Main:
                 score = self.model(inputs)
                 loss = self.criterion(score, target.float())
                 if batch_idx % 10 == 0:
-                    self._val_epoch(epoch_id, batch_idx, another_train_loader, valid_loader, test_loader)
+                    _ = self._val_epoch(epoch_id, batch_idx, another_train_loader, valid_loader, test_loader)
                 loss.backward()
                 optimizer.step()
+        return self._val_epoch(epoch_id, batch_idx, another_train_loader, valid_loader, test_loader)
 
     def _val_epoch(self, epoch_id, batch_idx, another_train_loader, valid_loader, test_loader):
         self.model.eval()
@@ -92,12 +119,12 @@ class Main:
             Test_Logits = []
             Test_Loss = []
             for idx, data in enumerate(test_loader):
-                inputs = data['x'].to(self.device)
-                target = data['y'].to(self.device)
-                logits = self.model(inputs)
-                temp_loss = self.criterion(logits, target.float())
-                Test_Targets.append(target)
-                Test_Logits.append(logits)
+                inputs_test = data['x'].to(self.device)
+                target_test = data['y'].to(self.device)
+                logits_test = self.model(inputs_test)
+                temp_loss = self.criterion(logits_test, target_test.float())
+                Test_Targets.append(target_test)
+                Test_Logits.append(logits_test)
                 Test_Loss.append(temp_loss.tolist())
                 if idx == 10:
                     break
@@ -112,6 +139,4 @@ class Main:
                                                                                                          train_auc,
                                                                                                          val_auc,
                                                                                                          test_auc))
-
-    def predict(self, data_loader):
-        pass
+        return val_auc

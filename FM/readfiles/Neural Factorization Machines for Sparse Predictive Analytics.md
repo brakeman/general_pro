@@ -3,8 +3,8 @@
 ## 链接
 
 ## 对该文章的印象：
-- 这文章就是 NFM(BIP层) 加一个简单的attention 机制，这都水上论文了；
-- 模型结构：![Drag Racing](../pics/AFM/AFM_1.jpg)
-- attention 层： ![Drag Racing](../pics/AFM/AFM_3.jpg)
-- 最终公式：![Drag Racing](../pics/AFM/AFM_2.jpg)
-![Drag Racing](../pics/NFM/NFM_1.jpg)
+- 核心是BIP 操作： 把bs,Fileds,F 自然降为2D 结构
+- 公式： ![Drag Racing](../pics/NFM/NFM_3.jpg)
+- BIP：![Drag Racing](../pics/NFM/NFM_2.jpg)
+- 图：![Drag Racing](../pics/NFM/NFM_1.jpg)
+

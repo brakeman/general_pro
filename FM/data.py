@@ -7,13 +7,11 @@ from torch.utils.data import Dataset
 from torch.utils.data.sampler import SubsetRandomSampler
 
 
-def get_split_idx(dataset, val_split, test_split, random_seed, shuffle_dataset=True):
+def get_split_idx(dataset, val_split, test_split):
     '''
     :param dataset: could be torch dataset or numpy array; [samples, features]
     :param val_split: 切分点，前面代表train;
     :param test_split: 切分点，前面代表valid; 后面代表test;
-    :param random_seed: for shuffle
-    :param shuffle_dataset: default True
     :return: train_idx, val_idx, test_idx;
     '''
     assert test_split > val_split
@@ -21,24 +19,18 @@ def get_split_idx(dataset, val_split, test_split, random_seed, shuffle_dataset=T
     indices = list(range(dataset_size))
     split1 = int(val_split * dataset_size)
     split2 = int(test_split * dataset_size)
-    if shuffle_dataset:
-        np.random.seed(random_seed)
-        np.random.shuffle(indices)
     train_idx, val_idx, test_idx = indices[:split1], indices[split1:split2], indices[split2:]
     print('len_train:{}, len_val:{}, len_test:{}'.format(len(train_idx), len(val_idx), len(test_idx)))
     return train_idx, val_idx, test_idx
 
 
-def train_val_test_split(dataset, bs_train, pre_defined_idx, val_split=0.8, test_split=0.9,
-                         shuffle_dataset=True, random_seed=666, return_idx=True):
+def train_val_test_split(dataset, bs_train, pre_defined_idx, val_split=0.8, test_split=0.9, return_idx=True):
     '''
     :param dataset: pytorch dataset object;
     :param bs_train: training batch size
     :param pre_defined_idx: a tuple as (train_idx, val_idx, test_idx), select which part of dataset as train/val/test
     :param val_split: train split ratio like 0.8 means 80% as train
     :param test_split: valid split ratio like 0.9 means 10% as valid as 10% as test;
-    :param shuffle_dataset: if True, dataset will be shuffled, only works when pre_defined_idx is None;
-    :param random_seed: using for shuffle;
     :param return_idx: if true, return a tuple as (train_idx, val_idx, test_idx)
     :return: if return_idx is False:full_train_loader, train_loader, val_loader, test_loader;
             else return full_train_loader, train_loader, val_loader, test_loader, (train_idx, val_idx, test_idx)
@@ -46,10 +38,8 @@ def train_val_test_split(dataset, bs_train, pre_defined_idx, val_split=0.8, test
 
     if pre_defined_idx is None:
         train_idx, val_idx, test_idx = get_split_idx(dataset,
-                                                     shuffle_dataset=shuffle_dataset,
                                                      val_split=val_split,
-                                                     test_split=test_split,
-                                                     random_seed=random_seed)
+                                                     test_split=test_split)
     else:
         train_idx, val_idx, test_idx = pre_defined_idx
 
@@ -113,3 +103,42 @@ class CbData(Dataset):
             x = self.transform(x)
         sample = {'x': x, 'y': y}
         return sample
+
+
+class CbData_test(Dataset):
+
+    def __init__(self, x, gbdt_model, transform=None):
+        """
+        Args:
+            root_dir (string): Directory with all the data.
+            gbdt_model: a lgb model.
+            transform (callable, optional): Optional transform to be applied
+                on a sample.
+        """
+
+        self.x = x[:, :-1]
+        x = gbdt_model.predict(self.x, pred_leaf=True)  # [bs, 4000 trees]
+        _, num_trees = x.shape
+        leaf_num_per_tree = len(np.unique(x))
+        self.num_unique_leaf = leaf_num_per_tree * num_trees
+        to_add = np.arange(0, self.num_unique_leaf, step=leaf_num_per_tree)
+        x = x + to_add  # 【bs, 4000】叶子序号
+        self.x = x
+        self.transform = transform
+        self.leaf_num_per_tree = leaf_num_per_tree
+        self.num_trees = num_trees
+        print('num_trees:{}, leaf_num_per_tree:{}'.format(num_trees, leaf_num_per_tree))
+
+    def __len__(self):
+        return len(self.x)
+
+    def __getitem__(self, idx):
+        if torch.is_tensor(idx):
+            idx = idx.tolist()
+
+        x = self.x[idx]
+        if self.transform:
+            x = self.transform(x)
+        sample = {'x': x}
+        return sample
+
