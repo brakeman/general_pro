@@ -1,6 +1,7 @@
-from FM.data import CbDataNew, train_val_test_split, CbData_test
+from FM.data import CbDataNew
 from FM.layers import WideDeep, DeepFM, NFM, DeepCross, AFM, xDeepFM
 from FM.utils import roc_auc_compute
+from sklearn.metrics import roc_auc_score
 import torch
 from torch.utils.data import DataLoader
 import torch.nn as nn
@@ -39,7 +40,7 @@ class Main:
         if model_name == 'WideDeep':
             self.model = WideDeep(num_uniq_leaf=self.leaf_num_per_tree * self.num_trees,
                                   num_trees=self.num_trees,
-                                  leaf_num_per_tree=emb_size).to(device)
+                                  dim_leaf_emb=emb_size).to(device)
 
         elif model_name == 'DeepFM':
             self.model = DeepFM(self.leaf_num_per_tree * self.num_trees,
@@ -59,9 +60,7 @@ class Main:
                                    num_layers=1).to(device)
 
         elif model_name == 'AFM':
-            self.model = AFM(self.leaf_num_per_tree * self.num_trees,
-                             self.num_trees,
-                             emb_size).to(device)
+            self.model = AFM(self.leaf_num_per_tree * self.num_trees, emb_size).to(device)
 
         elif model_name == 'xDeepFM':
             self.model = xDeepFM(num_layers=2,
@@ -72,11 +71,19 @@ class Main:
         print(self.model)
         self.criterion = nn.BCELoss()
 
-    def train(self, epoch, batch_size, lr, weight_decay, verbose, save_model):
+    def train(self, epoch, batch_size, lr, weight_decay, verbose, save_model, save_log):
         if verbose == 1:
             self.verbose = 1
         else:
             self.verbose = 0
+        if save_log:
+            dir_path = os.getcwd() + '/run_log_dir/'
+            print("Created directory：" + "run_log_dir")
+            if not os.path.exists(dir_path):
+                os.makedirs(dir_path)
+            file = open(dir_path + '{}_logs.txt'.format(self.model_name), 'w')
+        else:
+            file = None
         self.train_loader = DataLoader(dataset=self.train_dataset, batch_size=batch_size)
         self.val_loader = DataLoader(dataset=self.val_dataset, batch_size=len(self.val_dataset))
         optimizer = torch.optim.Adam(self.model.parameters(), lr=lr,
@@ -84,7 +91,7 @@ class Main:
         print('start training ......')
         for epoch_id in range(epoch):
             t0 = time.time()
-            train_loss, val_loss, train_auc, val_auc = self._train_epoch(optimizer=optimizer)
+            train_loss, val_loss, train_auc, val_auc = self._train_epoch(optimizer=optimizer, log_file=file)
 
             if verbose == 1:
                 print('\n-----------------------  epoch_id:{}/{} use:{} seconds  --------------------------'.format(
@@ -94,12 +101,18 @@ class Main:
                                                                                         val_auc))
 
             if save_model:
+                if save_log:
+                    file.writelines('\nmodel saved in {}'.format(
+                        self.model_save_dir + '{}_epoch_{}_auc_{}'.format(self.model_name, epoch_id, val_auc)))
+
                 print('\nmodel saved in {}'.format(
                     self.model_save_dir + '{}_epoch_{}_auc_{}'.format(self.model_name, epoch_id, val_auc)))
                 torch.save(self.model,
                            self.model_save_dir + '{}_epoch_{}_auc_{}'.format(self.model_name, epoch_id, val_auc))
+        if save_log:
+            file.close()
 
-    def _train_epoch(self, optimizer):
+    def _train_epoch(self, optimizer, log_file=None):
         train_targets_list, train_logit_list, train_loss_list, batch_idx = [], [], [], None
         for batch_idx, data in enumerate(self.train_loader):
             inputs = data['x'].to(self.device)
@@ -116,11 +129,10 @@ class Main:
             if batch_idx % 10 == 0:
                 self.train_loss = np.mean(train_loss_list)
                 self.train_auc = roc_auc_compute(torch.cat(train_targets_list), torch.cat(train_logit_list).detach())
-                self._eval_epoch(batch_idx=batch_idx)
+                self._eval_epoch(batch_idx=batch_idx, log_file=log_file)
+        return self._eval_epoch(batch_idx=batch_idx, log_file=log_file)
 
-        return self._eval_epoch(batch_idx=batch_idx)
-
-    def _eval_epoch(self, batch_idx):
+    def _eval_epoch(self, batch_idx, log_file=None):
         self.model.eval()
         with torch.no_grad():
             val_target_list, val_logit_list, val_loss_list = [], [], []
@@ -142,6 +154,14 @@ class Main:
                 batch_idx, len(self.train_loader.dataset) // self.train_loader.batch_size))
             print('train_loss:{}  valid:loss:{}\ntrain_auc:{} valid_auc:{}'.format(self.train_loss, val_loss,
                                                                                    self.train_auc, val_auc))
+            if log_file is not None:
+                log_file.writelines(
+                    '\n--------------------------------batch_num:{}/{}----------------------------------------\n'.format(
+                        batch_idx, len(self.train_loader.dataset) // self.train_loader.batch_size))
+                log_file.writelines('train_loss:{}  valid:loss:{}\ntrain_auc:{} valid_auc:{}'.format(self.train_loss,
+                                                                                                     val_loss,
+                                                                                                     self.train_auc,
+                                                                                                     val_auc))
         return self.train_loss, val_loss, self.train_auc, val_auc
 
     def predict(self, new_x, load_path=None):
@@ -157,3 +177,5 @@ class Main:
         x = torch.tensor(x)
         output = self.predict(x, load_path)
         return roc_auc_score(y, output.detach().numpy().flatten())
+
+
