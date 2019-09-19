@@ -4,91 +4,64 @@ import pandas as pd
 import numpy as np
 import torch
 from torch.utils.data import Dataset
-from torch.utils.data.sampler import SubsetRandomSampler
+import random
 
 
-def get_split_idx(dataset, val_split, test_split):
+def get_split_idx(all_valid_idx, val_split, test_split, shuffle=True):
     '''
-    :param dataset: could be torch dataset or numpy array; [samples, features]
+    :param all_valid_idx: 有效idx, 在保证 数据源x, y 的idx一一对应前提下，只取过滤掉nan后的样本idx；
     :param val_split: 切分点，前面代表train;
     :param test_split: 切分点，前面代表valid; 后面代表test;
+    :param shuffle: 打乱index 后再切割;
     :return: train_idx, val_idx, test_idx;
     '''
+
     assert test_split > val_split
-    dataset_size = len(dataset)
-    indices = list(range(dataset_size))
+    dataset_size = len(all_valid_idx)
+    indices = all_valid_idx
     split1 = int(val_split * dataset_size)
     split2 = int(test_split * dataset_size)
+    if shuffle:
+        random.shuffle(indices)
     train_idx, val_idx, test_idx = indices[:split1], indices[split1:split2], indices[split2:]
     print('len_train:{}, len_val:{}, len_test:{}'.format(len(train_idx), len(val_idx), len(test_idx)))
     return train_idx, val_idx, test_idx
 
 
-def train_val_test_split(dataset, bs_train, pre_defined_idx, val_split=0.8, test_split=0.9, return_idx=True):
-    '''
-    :param dataset: pytorch dataset object;
-    :param bs_train: training batch size
-    :param pre_defined_idx: a tuple as (train_idx, val_idx, test_idx), select which part of dataset as train/val/test
-    :param val_split: train split ratio like 0.8 means 80% as train
-    :param test_split: valid split ratio like 0.9 means 10% as valid as 10% as test;
-    :param return_idx: if true, return a tuple as (train_idx, val_idx, test_idx)
-    :return: if return_idx is False:full_train_loader, train_loader, val_loader, test_loader;
-            else return full_train_loader, train_loader, val_loader, test_loader, (train_idx, val_idx, test_idx)
-    '''
+class CbDataNew(Dataset):
 
-    if pre_defined_idx is None:
-        train_idx, val_idx, test_idx = get_split_idx(dataset,
-                                                     val_split=val_split,
-                                                     test_split=test_split)
-    else:
-        train_idx, val_idx, test_idx = pre_defined_idx
-
-    train_sampler = SubsetRandomSampler(train_idx)
-    valid_sampler = SubsetRandomSampler(val_idx)
-    test_sampler = SubsetRandomSampler(test_idx)
-    train_loader = torch.utils.data.DataLoader(dataset, bs_train, sampler=train_sampler)
-    val_loader = torch.utils.data.DataLoader(dataset, len(val_idx), sampler=valid_sampler)
-    test_loader = torch.utils.data.DataLoader(dataset, len(test_idx), sampler=test_sampler)
-    another_train_loader = torch.utils.data.DataLoader(dataset, bs_train, sampler=train_sampler)
-    print('len_train:{}, len_val:{}, len_test:{}'.format(len(train_idx), len(val_idx), len(test_idx)))
-    if return_idx:
-        return another_train_loader, train_loader, val_loader, test_loader, (train_idx, val_idx, test_idx)
-    return another_train_loader, train_loader, val_loader, test_loader
-
-
-class CbData(Dataset):
-
-    def __init__(self, root_dir, gbdt_model, add_CLS=True, transform=None):
+    def __init__(self, root_dir, gbdt_model, data_idx, add_cls=False, transform=None):
         """
         Args:
             root_dir (string): Directory with all the data.
             gbdt_model: a lgb model.
+            data_idx: 有效样本idx.
             transform (callable, optional): Optional transform to be applied
                 on a sample.
         """
 
         self.root_dir = root_dir
-        self.x = np.load(root_dir + '/data.npy')
-        self.y = pd.read_csv(root_dir + '/final_label.csv')
-        self.y.index = range(len(self.y))
-        self.keep_rows = self.y[~self.y.default_20.isnull()].index.tolist()
-        self.x = self.x[self.keep_rows, :-1]
+        x = np.load(root_dir + '/data.npy')
+        y = pd.read_csv(root_dir + '/really_final_label_with_x_order.csv')
+        y.columns = ['loanid', 'label']
 
-        x = gbdt_model.predict(self.x, pred_leaf=True)  # [bs, 4000 trees]
+        self.data_idx = data_idx
+        x = gbdt_model.predict(x[data_idx, :-7], pred_leaf=True)  # [bs, 4000 trees]
         _, num_trees = x.shape
         leaf_num_per_tree = len(np.unique(x))
         self.num_unique_leaf = leaf_num_per_tree * num_trees
         to_add = np.arange(0, self.num_unique_leaf, step=leaf_num_per_tree)
         x = x + to_add  # 【bs, 4000】叶子序号
-        if add_CLS:
+        if add_cls:
             to_concat = np.ones(len(x))[:, np.newaxis] * leaf_num_per_tree * num_trees  # [CLS]编码
             self.x = np.concatenate((to_concat, x), axis=1).astype(int)
         else:
             self.x = x
-        self.y = self.y.values[self.keep_rows, -1]
+        self.y = y.iloc[data_idx].label.values
         self.transform = transform
         self.leaf_num_per_tree = leaf_num_per_tree
         self.num_trees = num_trees
+        print('x shape:{}, num_trees:{}, leaf_num_per_tree:{}'.format(self.x.shape, num_trees, leaf_num_per_tree))
 
     def __len__(self):
         return len(self.x)
@@ -103,42 +76,3 @@ class CbData(Dataset):
             x = self.transform(x)
         sample = {'x': x, 'y': y}
         return sample
-
-
-class CbData_test(Dataset):
-
-    def __init__(self, x, gbdt_model, transform=None):
-        """
-        Args:
-            root_dir (string): Directory with all the data.
-            gbdt_model: a lgb model.
-            transform (callable, optional): Optional transform to be applied
-                on a sample.
-        """
-
-        self.x = x[:, :-1]
-        x = gbdt_model.predict(self.x, pred_leaf=True)  # [bs, 4000 trees]
-        _, num_trees = x.shape
-        leaf_num_per_tree = len(np.unique(x))
-        self.num_unique_leaf = leaf_num_per_tree * num_trees
-        to_add = np.arange(0, self.num_unique_leaf, step=leaf_num_per_tree)
-        x = x + to_add  # 【bs, 4000】叶子序号
-        self.x = x
-        self.transform = transform
-        self.leaf_num_per_tree = leaf_num_per_tree
-        self.num_trees = num_trees
-        print('num_trees:{}, leaf_num_per_tree:{}'.format(num_trees, leaf_num_per_tree))
-
-    def __len__(self):
-        return len(self.x)
-
-    def __getitem__(self, idx):
-        if torch.is_tensor(idx):
-            idx = idx.tolist()
-
-        x = self.x[idx]
-        if self.transform:
-            x = self.transform(x)
-        sample = {'x': x}
-        return sample
-

@@ -3,10 +3,9 @@
   <component name="ChangeListManager">
     <list default="true" id="2ab8fbc9-3675-4836-8018-9145a4b08e6f" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/data.py" beforeDir="false" afterPath="$PROJECT_DIR$/data.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/layers.py" beforeDir="false" afterPath="$PROJECT_DIR$/layers.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/readfiles/torch_detail.md" beforeDir="false" afterPath="$PROJECT_DIR$/readfiles/torch_detail.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/readfiles/xDeepFM- Combining Explicit and Implicit Feature Interactions for Recommender Systems.md" beforeDir="false" afterPath="$PROJECT_DIR$/readfiles/xDeepFM- Combining Explicit and Implicit Feature Interactions for Recommender Systems.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../gbdt_emb_trfm/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../gbdt_emb_trfm/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -17,11 +16,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf>
-      <file pinned="false" current-in-tab="false">
+      <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/layers.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1154">
-              <caret line="233" lean-forward="true" selection-start-line="233" selection-end-line="233" />
+            <state relative-caret-position="301">
+              <caret line="94" column="33" lean-forward="true" selection-end-line="235" />
               <folding>
                 <element signature="e#0#12#0" expanded="true" />
               </folding>
@@ -32,8 +31,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/data.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="2160">
-              <caret line="144" selection-start-line="144" selection-end-line="144" />
+            <state relative-caret-position="450">
+              <caret line="30" column="25" lean-forward="true" selection-end-line="78" />
               <folding>
                 <element signature="e#175#194#0" expanded="true" />
               </folding>
@@ -41,13 +40,13 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/main.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="195">
-              <caret line="13" lean-forward="true" selection-start-line="13" selection-end-line="13" />
+            <state relative-caret-position="150">
+              <caret line="10" column="33" lean-forward="true" selection-end-line="159" />
               <folding>
-                <element signature="e#0#48#0" expanded="true" />
+                <element signature="e#0#64#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -144,6 +143,7 @@
       <find>_cross_layer</find>
       <find>Parameter</find>
       <find>_get_batch_idx</find>
+      <find>DataLoader</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -157,11 +157,11 @@
         <option value="$PROJECT_DIR$/readfiles/Deep &amp; Cross Network for Ad Click Predictions.md" />
         <option value="$PROJECT_DIR$/readfiles/Attentional Factorization Machines- Learning the Weight of Feature Interactions via Attention Networks.md" />
         <option value="$PROJECT_DIR$/readfiles/Neural Factorization Machines for Sparse Predictive Analytics.md" />
-        <option value="$PROJECT_DIR$/data.py" />
         <option value="$PROJECT_DIR$/readfiles/torch_detail.md" />
         <option value="$PROJECT_DIR$/readfiles/xDeepFM- Combining Explicit and Implicit Feature Interactions for Recommender Systems.md" />
-        <option value="$PROJECT_DIR$/layers.py" />
+        <option value="$PROJECT_DIR$/data.py" />
         <option value="$PROJECT_DIR$/main.py" />
+        <option value="$PROJECT_DIR$/layers.py" />
       </list>
     </option>
   </component>
@@ -187,11 +187,6 @@
               <item name="FM" type="b2602c69:ProjectViewProjectNode" />
               <item name="FM" type="462c0819:PsiDirectoryNode" />
               <item name="papers" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="FM" type="b2602c69:ProjectViewProjectNode" />
-              <item name="FM" type="462c0819:PsiDirectoryNode" />
-              <item name="readfiles" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
@@ -281,11 +276,11 @@
     <editor active="true" />
     <layout>
       <window_info id="Favorites" side_tool="true" />
-      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.24947146" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.24947146" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info anchor="bottom" id="Version Control" weight="0.32921812" />
       <window_info anchor="bottom" id="Python Console" weight="0.32921812" />
-      <window_info active="true" anchor="bottom" id="Terminal" visible="true" weight="0.32921812" />
+      <window_info anchor="bottom" id="Terminal" visible="true" weight="0.32921812" />
       <window_info anchor="bottom" id="Event Log" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" />
@@ -366,23 +361,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/utils.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="15">
-          <caret line="1" selection-start-line="1" selection-end-line="1" selection-end-column="41" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/data.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2160">
-          <caret line="144" selection-start-line="144" selection-end-line="144" />
-          <folding>
-            <element signature="e#175#194#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/readfiles/torch_detail.md">
       <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
         <state split_layout="SPLIT">
@@ -403,22 +381,39 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/layers.py">
+    <entry file="file://$PROJECT_DIR$/utils.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1154">
-          <caret line="233" lean-forward="true" selection-start-line="233" selection-end-line="233" />
+        <state relative-caret-position="15">
+          <caret line="1" selection-start-line="1" selection-end-line="1" selection-end-column="41" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/data.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="450">
+          <caret line="30" column="25" lean-forward="true" selection-end-line="78" />
           <folding>
-            <element signature="e#0#12#0" expanded="true" />
+            <element signature="e#175#194#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/main.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="195">
-          <caret line="13" lean-forward="true" selection-start-line="13" selection-end-line="13" />
+        <state relative-caret-position="150">
+          <caret line="10" column="33" lean-forward="true" selection-end-line="159" />
           <folding>
-            <element signature="e#0#48#0" expanded="true" />
+            <element signature="e#0#64#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/layers.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="301">
+          <caret line="94" column="33" lean-forward="true" selection-end-line="235" />
+          <folding>
+            <element signature="e#0#12#0" expanded="true" />
           </folding>
         </state>
       </provider>
