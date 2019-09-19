@@ -1,4 +1,4 @@
-# some of the torch tricks
+# some of the torch details
 
 ## 1. 卷积函数理解
     import torch

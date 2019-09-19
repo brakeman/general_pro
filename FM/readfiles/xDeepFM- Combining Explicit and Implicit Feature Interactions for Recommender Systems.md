@@ -36,31 +36,62 @@ xDeepFM: Combining Explicit and Implicit Feature Interactions for Recommender Sy
   
         Conv1d(4, 1, kernel_size=(1,), stride=(1,))
         tensor([[[-0.3542, -0.6679, -0.4820]]], grad_fn=<SqueezeBackward1>)
-- 他们代码
+- 代码2
 
         # 我的代码 
-        conv = nn.Conv1d(1, 1, (2, 3), stride=2)
-        print(conv)
-        a = torch.randint(2, (1, 1, 4, 3)).type(torch.float32)
-        x2 = conv(a)
-        print(a)
-        print(conv.weight)
-        print(conv.bias)
-        print(x2)
+        bs = 1
+        ts1 =3
+        F = 4
+        num_filters = 1
+        a = torch.randint(2, (bs,ts1,F))
+        z = torch.einsum('btf,byf->bfty', a, a)
+        z1 = z.contiguous().view(bs, -1, ts1, ts1*F).type(torch.float32)
+        print(z)
+        print('---------------------')
+        print(z1)
+        print(z1.shape)
+        print('---------------------')
         
-        # 输出:
-        Conv1d(1, 1, kernel_size=(2, 3), stride=(2,))
-        tensor([[[[1., 1., 0.],
-                  [0., 0., 0.],
-                  [1., 1., 1.],
-                  [1., 1., 0.]]]])
+        conv = nn.Conv1d(1, num_filters, (ts1, ts1), stride=ts1)
+        print(conv.weight)
+        print('---------------------')
+        print(conv.bias)
+        print('---------------------')
+        x2 = conv(z1)
+        print(x2.squeeze())
+        
+        
+        # outputs:
+        tensor([[[[0, 0, 0],
+          [0, 1, 0],
+          [0, 0, 0]],
+
+         [[1, 1, 1],
+          [1, 1, 1],
+          [1, 1, 1]],
+
+         [[0, 0, 0],
+          [0, 0, 0],
+          [0, 0, 1]],
+
+         [[1, 0, 0],
+          [0, 0, 0],
+          [0, 0, 0]]]])
+        ---------------------
+        tensor([[[[0., 0., 0., 0., 1., 0., 0., 0., 0., 1., 1., 1.],
+                  [1., 1., 1., 1., 1., 1., 0., 0., 0., 0., 0., 0.],
+                  [0., 0., 1., 1., 0., 0., 0., 0., 0., 0., 0., 0.]]]])
+        torch.Size([1, 1, 3, 12])
+        ---------------------
         Parameter containing:
-        tensor([[[[ 0.3108, -0.1124, -0.0978],
-                  [ 0.3622, -0.3333,  0.0616]]]], requires_grad=True)
+        tensor([[[[ 0.0565,  0.1103, -0.3196],
+                  [-0.1244,  0.2195,  0.2710],
+                  [ 0.3258, -0.0517,  0.1298]]]], requires_grad=True)
+        ---------------------
         Parameter containing:
-        tensor([-0.2372], requires_grad=True)
-        tensor([[[[-0.0388],
-                  [-0.1077]]]], grad_fn=<MkldnnConvolutionBackward>)
+        tensor([-0.1125], requires_grad=True)
+        ---------------------
+        tensor([ 0.3834,  0.6897, -0.1125, -0.2653], grad_fn=<SqueezeBackward0>)
 - CIN 层：![Drag Racing](../pics/xDeepFM/xDeepFM_1.jpg)
 - CIN 公式： ![Drag Racing](../pics/xDeepFM/xDeepFM_2.jpg)
 - 整体： ![Drag Racing](../pics/xDeepFM/xDeepFM_3.png)

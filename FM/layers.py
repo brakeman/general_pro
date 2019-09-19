@@ -178,11 +178,56 @@ class AFM(nn.Module):
         logits = F.sigmoid(self.ffn(out))
         return logits
 
+# xDeepFM 层
+class CIN_layer(nn.Module):
 
+    def __init__(self, num_filters, ts_0, ts_k, F):
+        # ts_0 代表x_0时间长度， ts_k 代表第k 个layer的时间长度
+        super(CIN_layer, self).__init__()
+        self.conv = nn.Conv1d(1, num_filters, (ts_0, ts_k), stride=ts_k)
+
+    def forward(self, x_0, x_k):
+        # x_0: bs, ts_0, f
+        # x_k: bs, ts_k, f
+        _, ts_0, _ = x_0.shape
+        bs, ts_k, f = x_k.shape
+        z = torch.einsum('btf,byf->bfty', x_0, x_k).contiguous().view(bs, -1, ts_0, f * ts_k)  # [bs, 1, ts_0, ts_k*F]
+        print('CIN layer z shape:{}'.format(z.shape))
+        out = self.conv(z).squeeze()
+        print('CIN layer out shape:{}'.format(out.shape))
+        return out  # [bs, ts_k_new, f]
+
+
+# 空间复杂度高？不应该啊;
 class xDeepFM(nn.Module):
 
-    def __init__(self, num_uniq_leaf, num_trees, dim_leaf_emb):
+    def __init__(self, num_layers, layer_filters, num_uniq_leaf, num_trees, dim_leaf_emb):
         super(xDeepFM, self).__init__()
+        self.Emb = nn.Embedding(num_uniq_leaf, dim_leaf_emb)
 
-    def cin_layer(self):
-        return
+        if isinstance(layer_filters, list):
+            assert num_layers == len(layer_filters)
+        elif isinstance(layer_filters, int):
+            layer_filters = [layer_filters] * num_layers
+        else:
+            raise Exception('layer_filters should be int or list of int obj')
+
+        ts_k_list = [num_trees]
+        ts_k_list.extend(layer_filters[:-1]) # 每一层最开始的ts_k，第一层即ts_0, 随后每一层由上一层的 filter_num 决定;
+
+        cin_layers = [layer_filters[:-1]]
+        self.layer_list = nn.ModuleList()
+        for _, filters, ts_k in zip(range(num_layers), layer_filters, ts_k_list):
+            self.layer_list.append(CIN_layer(filters, ts_0=num_trees, ts_k=ts_k, F=dim_leaf_emb))
+        self.ffn = nn.Linear(sum(layer_filters), 1)  # 因为最后concat 的轴是 ts_k， ts_k 是每一层最后输出的新的ts轴，由每一层的filter_size 决定
+
+    def forward(self, x):
+        x0 = self.Emb(x)  # bs, ts_0, F
+        xk = x0
+        layer_out = []
+        for cin_model in self.layer_list:
+            xk = cin_model(x0, xk)  # [bs, ts_k, F]
+            layer_out.append(xk.sum(dim=1))  # sum pooling [bs, ts_k]
+        out = torch.cat(layer_out, dim=-1)
+        logits = F.sigmoid(self.ffn(out))
+        return logits

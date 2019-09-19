@@ -1,5 +1,5 @@
 from FM.data import CbData, train_val_test_split, CbData_test
-from FM.layers import WideDeep, DeepFM, NFM, DeepCross, AFM
+from FM.layers import WideDeep, DeepFM, NFM, DeepCross, AFM, xDeepFM
 from FM.utils import roc_auc_compute
 import torch
 from torch import autograd
@@ -13,7 +13,7 @@ warnings.filterwarnings("ignore")
 class Main:
 
     def __init__(self, gbdt_model, pre_defined_idx, device, root_dir, emb_size, model_save_dir, model='WideDeep'):
-        assert model in ['WideDeep', 'DeepFM', 'NFM', 'DeepCross', 'AFM']
+        assert model in ['WideDeep', 'DeepFM', 'NFM', 'DeepCross', 'AFM', 'xDeepFM']
         self.gbdt_model = gbdt_model
         self.pre_defined_idx = pre_defined_idx  # 更训练gbdt 时的样本保持一致；相同的train,val,test;
         self.full_dataset = CbData(root_dir, add_CLS=False, gbdt_model=gbdt_model)
@@ -32,16 +32,22 @@ class Main:
                 device)
         elif model == 'AFM':
             self.model = AFM(self.leaf_num_per_tree * self.num_trees, self.num_trees, emb_size).to(device)
+        elif model == 'xDeepFM':
+            # num_layers, layer_filters, num_uniq_leaf, num_trees, dim_leaf_emb
+            self.model = xDeepFM(2, [3] * 2, self.leaf_num_per_tree * self.num_trees, self.num_trees, emb_size).to(
+                device)
+
         self.criterion = nn.BCELoss()
 
     def predict(self, new_x, load_path=None):
-        if load_path is not None:
+        if load_path:
             model = torch.load(load_path)
         else:
             model = self.model
         model.eval()
         new_x_da = CbData_test(new_x, self.gbdt_model)
         loader = torch.utils.data.DataLoader(new_x_da, len(new_x_da))
+        logits = None
         for x in loader:
             inp = x['x']
             logits = model(inp)
