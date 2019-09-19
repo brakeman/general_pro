@@ -16,6 +16,7 @@ xDeepFM: Combining Explicit and Implicit Feature Interactions for Recommender Sy
 	- 再回头看公式，看那个W,  在想象卷积，是不是对应的，同一的？
 - 代码实现上, 看好多人的源码(比如最下面)都是先reshape 成3D, input Z_k 本来是应该是4D的[bs,ts,ts, F] [只考虑layer=1], 然后3D输入配合 列卷积核【ts*ts, 1], 我实在看不懂怎么就能 用列卷积核了，
 从我自己角度来看，工程上是可以按照我上面描述的去做的：立方体Z_k 3D矩阵，reshape 为2D, 只需要用一个 平面卷积核[ts2,F], 配合步长为 ts, 即可做到；
+- [卷积](https://github.com/brakeman/general_pro/blob/master/FM/readfiles/torch_detail.md)
 - 跟他们的源码比较来看，大家都先是展开为3D [bs,ts*ts, F], 区别就在 他们用列卷积核，而我用平面卷积核， 且，他们步长为1， 我步长为 ts; 因此，如果我对他们的代码没理解错，那么就是他们错了，在只用1个filter 的情况下，滑动 ts*ts 步，因此配合下面的图看，看CIN层（b）图，他们的feature map 1 长度绝不可能是D = ts, if layer = 1;
 
         # 他们的代码，假设layer = 1, ts =2, F=3, filter个数为1；
