@@ -61,17 +61,19 @@ class Main:
             self.model = DeepCross(self.leaf_num_per_tree * self.num_trees,
                                    self.num_trees,
                                    emb_size,
-                                   num_layers=1).to(device)
+                                   num_layers=4,
+                                   concat_wide=concat_wide).to(device)
 
         elif model_name == 'AFM':
             self.model = AFM(self.leaf_num_per_tree * self.num_trees, emb_size).to(device)
 
         elif model_name == 'xDeepFM':
-            self.model = xDeepFM(num_layers=2,
-                                 layer_filters=[3] * 2,
+            self.model = xDeepFM(num_layers=4,
+                                 layer_filters=4,
                                  num_uniq_leaf=self.leaf_num_per_tree * self.num_trees,
                                  num_trees=self.num_trees,
-                                 dim_leaf_emb=emb_size).to(device)
+                                 dim_leaf_emb=emb_size,
+                                 concat_wide=concat_wide).to(device)
         print(self.model)
         self.criterion = nn.BCELoss()
 
