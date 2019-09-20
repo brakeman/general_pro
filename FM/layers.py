@@ -30,6 +30,8 @@ class WideDeep(nn.Module):
         return logits
 
 
+# RAM in full epoch val_dataset;
+# 变量尽量就地更新，不然多占内存，名字起少点；
 class DeepFM(nn.Module):
 
     def __init__(self, num_uniq_leaf, num_trees, dim_leaf_emb):
@@ -38,32 +40,39 @@ class DeepFM(nn.Module):
         self.Emb = nn.Embedding(num_uniq_leaf, dim_leaf_emb)
         self.deep1 = nn.Linear(dim_leaf_emb, dim_leaf_emb // 2)
         self.deep2 = nn.Linear(dim_leaf_emb // 2, dim_leaf_emb // 4)
-        #         in_dim = (dim_leaf_emb//4)*num_trees +
-        # self.deep3 = nn.Linear(num_trees * dim_leaf_emb // 4, num_trees * dim_leaf_emb // 8)
-        self.ffn = nn.Linear(532983, 1)  # to do
+        fm_part_dim = len(self._get_tri_idx(num_trees))  # ts'
+        self.ffn = nn.Linear(fm_part_dim + num_trees * (dim_leaf_emb // 4), 1)  # to do
         assert num_trees * dim_leaf_emb // 4 >= 2
 
     def _get_tri_idx(self, rank):
         assert rank >= 2
         aa = torch.range(0, rank * rank - 1).view(rank, rank).type(torch.long)
         bb = torch.triu(aa, 1)
-        return torch.unique(bb)[1:]
-
-    def _get_batch_idx(self, bs, rank):
-        b = self._get_tri_idx(rank)
-        return torch.cat([b + i for i in range(0, rank * rank * bs, rank ** 2)], dim=0)
+        return torch.unique(bb)[1:]  # 0不算；
 
     def forward(self, x):
         # x: bs, num_trees
-        x = self.Emb(x)  # bs, num_trees, F
-        att_mat = torch.einsum('btf,byf->bty', x, x)
-        bs, ts, _ = x.size()
-        fm_part = torch.take(att_mat, self._get_batch_idx(bs, ts)).view(bs, -1)  # [bs, F2]
-        deep_part = F.relu(self.deep1(x))  # [bs, new_trees, F_]
-        deep_part = F.relu(self.deep2(deep_part)).view(bs, -1)  # [bs, new_trees, F_]
-        concat = torch.cat([deep_part, fm_part], -1)
-        logits = F.sigmoid(self.ffn(concat))
-        return logits
+        x = self.Emb(x)  # bs, num_trees,
+        #         print(x.shape)
+        bs, ts, f = x.shape
+
+        fm_part = torch.einsum('btf,byf->bty', x, x)
+        #         print(x.shape)
+        fm_part = torch.triu(fm_part, diagonal=0)  # bs,ts,ty
+        #         print(fm_part.shape)
+        select_idx = self._get_tri_idx(ts)
+        #         print(select_idx.shape)
+        fm_part = fm_part.view(bs, -1)[:, select_idx]  # bs, flatten
+        #         print(fm_part.shape)
+        deep_part = F.relu(self.deep1(x))  # [bs, ts, F]
+        #         print(deep_part.shape)
+        deep_part = F.relu(self.deep2(deep_part))  # [bs, ts, F]
+        #         print(deep_part.shape)
+        deep_part = deep_part.view(bs, -1)  # [bs, ts*F]
+        #         print(deep_part.shape)
+        concat = torch.cat([deep_part, fm_part], -1)  #
+        out = F.sigmoid(self.ffn(concat))
+        return out
 
 
 class NFM(nn.Module):

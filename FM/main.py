@@ -8,6 +8,7 @@ import torch.nn as nn
 import numpy as np
 import warnings
 import time
+import os
 from sklearn.metrics import roc_auc_score
 warnings.filterwarnings("ignore")
 
@@ -71,7 +72,7 @@ class Main:
         print(self.model)
         self.criterion = nn.BCELoss()
 
-    def train(self, epoch, batch_size, lr, weight_decay, verbose, save_model, save_log):
+    def train(self, epoch, batch_size, lr, weight_decay, verbose, save_model, save_log, eval_full_epoch):
         if verbose == 1:
             self.verbose = 1
         else:
@@ -81,11 +82,15 @@ class Main:
             print("Created directory：" + "run_log_dir")
             if not os.path.exists(dir_path):
                 os.makedirs(dir_path)
-            file = open(dir_path + '{}_logs.txt'.format(self.model_name), 'w')
+            file = open(dir_path + '{}_logs{}.txt'.format(self.model_name,
+                                                          time.strftime("%Y-%m-%d_%H:%M:%S", time.localtime())), 'w')
         else:
             file = None
         self.train_loader = DataLoader(dataset=self.train_dataset, batch_size=batch_size)
-        self.val_loader = DataLoader(dataset=self.val_dataset, batch_size=len(self.val_dataset))
+        if eval_full_epoch:
+            self.val_loader = DataLoader(dataset=self.val_dataset, batch_size=len(self.val_dataset))
+        else:
+            self.val_loader = DataLoader(dataset=self.val_dataset, batch_size=batch_size)
         optimizer = torch.optim.Adam(self.model.parameters(), lr=lr,
                                      betas=(0.9, 0.999), eps=1e-08, weight_decay=weight_decay)
         print('start training ......')
@@ -144,9 +149,8 @@ class Main:
                 val_target_list.append(target)
                 val_logit_list.append(logits)
                 val_loss_list.append(val_loss.tolist())
-                if idx == 10:
+                if idx == 30:
                     break
-
             val_loss = np.mean(val_loss_list)
             val_auc = roc_auc_compute(torch.cat(val_target_list), torch.cat(val_logit_list))
         if self.verbose != 1:
@@ -156,7 +160,7 @@ class Main:
                                                                                    self.train_auc, val_auc))
             if log_file is not None:
                 log_file.writelines(
-                    '\n--------------------------------batch_num:{}/{}----------------------------------------\n'.format(
+                    '\n--------------------------------batch_num:{}/{}---------------------------------------\n'.format(
                         batch_idx, len(self.train_loader.dataset) // self.train_loader.batch_size))
                 log_file.writelines('train_loss:{}  valid:loss:{}\ntrain_auc:{} valid_auc:{}'.format(self.train_loss,
                                                                                                      val_loss,
@@ -177,5 +181,3 @@ class Main:
         x = torch.tensor(x)
         output = self.predict(x, load_path)
         return roc_auc_score(y, output.detach().numpy().flatten())
-
-
