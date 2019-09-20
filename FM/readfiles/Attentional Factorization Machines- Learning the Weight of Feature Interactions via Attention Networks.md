@@ -4,6 +4,7 @@
 
 ## 对该文章的印象：
 - 这文章就是 NFM(BIP层) 加一个简单的attention 机制，这都水上论文了；
+- 有个空间上 N平方的操作，缺陷太大；
 - 注意, 这里的W,b是共享参数，任何v_i,v_j 元素相乘之后都是乘以这个W;
 - 模型结构：![Drag Racing](../pics/AFM/AFM_1.jpg)
 - attention 层： ![Drag Racing](../pics/AFM/AFM_3.jpg)

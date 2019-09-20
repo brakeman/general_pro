@@ -206,8 +206,6 @@ class AFM(nn.Module):
         return logits
 
 
-
-
 # 直接把立方体Zk 压缩成 num_filters 个点;
 # kernel die;
 class CinLayer(nn.Module):
