@@ -30,18 +30,21 @@ class WideDeep(nn.Module):
         return logits
 
 
-# RAM in full epoch val_dataset;
-# 变量尽量就地更新，不然多占内存，名字起少点；
 class DeepFM(nn.Module):
 
-    def __init__(self, num_uniq_leaf, num_trees, dim_leaf_emb):
+    def __init__(self, num_uniq_leaf, num_trees, dim_leaf_emb, add_wide):
         super(DeepFM, self).__init__()
         self.num_trees = num_trees
         self.Emb = nn.Embedding(num_uniq_leaf, dim_leaf_emb)
         self.deep1 = nn.Linear(dim_leaf_emb, dim_leaf_emb // 2)
         self.deep2 = nn.Linear(dim_leaf_emb // 2, dim_leaf_emb // 4)
         fm_part_dim = len(self._get_tri_idx(num_trees))  # ts'
-        self.ffn = nn.Linear(fm_part_dim + num_trees * (dim_leaf_emb // 4), 1)  # to do
+        self.add_wide = add_wide
+        if add_wide:
+            out_dim = fm_part_dim + num_trees * (dim_leaf_emb // 4) + num_trees * dim_leaf_emb
+        else:
+            out_dim = fm_part_dim + num_trees * (dim_leaf_emb // 4)
+        self.ffn = nn.Linear(out_dim, 1)  # to do
         assert num_trees * dim_leaf_emb // 4 >= 2
 
     def _get_tri_idx(self, rank):
@@ -70,9 +73,12 @@ class DeepFM(nn.Module):
         #         print(deep_part.shape)
         deep_part = deep_part.view(bs, -1)  # [bs, ts*F]
         #         print(deep_part.shape)
-        concat = torch.cat([deep_part, fm_part], -1)  #
-        out = F.sigmoid(self.ffn(concat))
-        return out
+        if self.add_wide:
+            wide_part = x.view(bs, ts * f)  # bs, ts*F
+            concat = torch.cat([deep_part, fm_part, wide_part], -1)
+        else:
+            concat = torch.cat([deep_part, fm_part], -1)  #
+        return F.sigmoid(self.ffn(concat))
 
 
 class NFM(nn.Module):
