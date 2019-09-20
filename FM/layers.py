@@ -30,17 +30,19 @@ class WideDeep(nn.Module):
         return logits
 
 
+# RAM in full epoch val_dataset;
+# 变量尽量就地更新，不然多占内存，名字起少点；
 class DeepFM(nn.Module):
 
-    def __init__(self, num_uniq_leaf, num_trees, dim_leaf_emb, add_wide):
+    def __init__(self, num_uniq_leaf, num_trees, dim_leaf_emb, concat_wide):
         super(DeepFM, self).__init__()
         self.num_trees = num_trees
         self.Emb = nn.Embedding(num_uniq_leaf, dim_leaf_emb)
         self.deep1 = nn.Linear(dim_leaf_emb, dim_leaf_emb // 2)
         self.deep2 = nn.Linear(dim_leaf_emb // 2, dim_leaf_emb // 4)
         fm_part_dim = len(self._get_tri_idx(num_trees))  # ts'
-        self.add_wide = add_wide
-        if add_wide:
+        self.concat_wide = concat_wide
+        if concat_wide:
             out_dim = fm_part_dim + num_trees * (dim_leaf_emb // 4) + num_trees * dim_leaf_emb
         else:
             out_dim = fm_part_dim + num_trees * (dim_leaf_emb // 4)
@@ -73,17 +75,18 @@ class DeepFM(nn.Module):
         #         print(deep_part.shape)
         deep_part = deep_part.view(bs, -1)  # [bs, ts*F]
         #         print(deep_part.shape)
-        if self.add_wide:
+        if self.concat_wide:
             wide_part = x.view(bs, ts * f)  # bs, ts*F
             concat = torch.cat([deep_part, fm_part, wide_part], -1)
         else:
             concat = torch.cat([deep_part, fm_part], -1)  #
-        return F.sigmoid(self.ffn(concat))
+        logits = F.sigmoid(self.ffn(concat))
+        return logits
 
 
 class NFM(nn.Module):
 
-    def __init__(self, num_uniq_leaf, num_trees, dim_leaf_emb, concat_wide=True):
+    def __init__(self, num_uniq_leaf, num_trees, dim_leaf_emb, concat_wide):
         super(NFM, self).__init__()
         self.Emb = nn.Embedding(num_uniq_leaf, dim_leaf_emb)
         self.deep1 = nn.Linear(dim_leaf_emb, dim_leaf_emb // 2)
@@ -170,7 +173,7 @@ class AFM(nn.Module):
         self.Emb = nn.Embedding(num_uniq_leaf, dim_leaf_emb)
         self.deep1 = nn.Linear(dim_leaf_emb, dim_leaf_emb // 2)
         self.deep2 = nn.Linear(dim_leaf_emb // 2, dim_leaf_emb // 4)
-        att_dim = dim_leaf_emb//2
+        att_dim = dim_leaf_emb // 2
         self.W = Parameter(torch.Tensor(dim_leaf_emb, att_dim))
         self.b = Parameter(torch.Tensor(att_dim))
         self.h = Parameter(torch.Tensor(att_dim))
@@ -189,9 +192,9 @@ class AFM(nn.Module):
         # x: bs, num_trees
         x = self.Emb(x)  # bs, num_trees, F
         half_bip = self.half_bip(x, axis=1)  # bs, ts', F
-        x = F.relu(half_bip@self.W + self.b)  # [bs, ts', F2]
-        att = F.softmax(x@self.h, dim=-1)  # [bs, ts']
-        out = half_bip*att[:, :, None]  # [bs, ts', F]
+        x = F.relu(half_bip @ self.W + self.b)  # [bs, ts', F2]
+        att = F.softmax(x @ self.h, dim=-1)  # [bs, ts']
+        out = half_bip * att[:, :, None]  # [bs, ts', F]
         out = out.sum(dim=1)  # [bs, F]
         out = F.relu(self.deep1(out))  # bs, F2
         out = F.relu(self.deep2(out))
