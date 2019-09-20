@@ -30,8 +30,8 @@ class WideDeep(nn.Module):
         return logits
 
 
-# RAM in full epoch val_dataset;
-# 变量尽量就地更新，不然多占内存，名字起少点；
+# fm part: field 向量内积，3D->2D;
+# deep part: filed 独立dense后concat; 3D-->3D--2D
 class DeepFM(nn.Module):
 
     def __init__(self, num_uniq_leaf, num_trees, dim_leaf_emb, concat_wide):
@@ -39,15 +39,14 @@ class DeepFM(nn.Module):
         self.num_trees = num_trees
         self.Emb = nn.Embedding(num_uniq_leaf, dim_leaf_emb)
         self.deep1 = nn.Linear(dim_leaf_emb, dim_leaf_emb // 2)
-        self.deep2 = nn.Linear(dim_leaf_emb // 2, dim_leaf_emb // 4)
         fm_part_dim = len(self._get_tri_idx(num_trees))  # ts'
         self.concat_wide = concat_wide
         if concat_wide:
-            out_dim = fm_part_dim + num_trees * (dim_leaf_emb // 4) + num_trees * dim_leaf_emb
+            out_dim = fm_part_dim + num_trees * (dim_leaf_emb // 2) + num_trees * dim_leaf_emb
         else:
-            out_dim = fm_part_dim + num_trees * (dim_leaf_emb // 4)
+            out_dim = fm_part_dim + num_trees * (dim_leaf_emb // 2)
         self.ffn = nn.Linear(out_dim, 1)  # to do
-        assert num_trees * dim_leaf_emb // 4 >= 2
+        assert num_trees * dim_leaf_emb // 2 >= 2
 
     def _get_tri_idx(self, rank):
         assert rank >= 2
@@ -70,9 +69,6 @@ class DeepFM(nn.Module):
         fm_part = fm_part.view(bs, -1)[:, select_idx]  # bs, flatten
         #         print(fm_part.shape)
         deep_part = F.relu(self.deep1(x))  # [bs, ts, F]
-        #         print(deep_part.shape)
-        deep_part = F.relu(self.deep2(deep_part))  # [bs, ts, F]
-        #         print(deep_part.shape)
         deep_part = deep_part.view(bs, -1)  # [bs, ts*F]
         #         print(deep_part.shape)
         if self.concat_wide:
@@ -84,6 +80,7 @@ class DeepFM(nn.Module):
         return logits
 
 
+# fm part: field 上三角向量元素积后 SUM pooling，3D->3D->2D;
 class NFM(nn.Module):
 
     def __init__(self, num_uniq_leaf, num_trees, dim_leaf_emb, concat_wide):
@@ -91,7 +88,6 @@ class NFM(nn.Module):
         self.Emb = nn.Embedding(num_uniq_leaf, dim_leaf_emb)
         self.deep1 = nn.Linear(dim_leaf_emb, dim_leaf_emb // 2)
         self.deep2 = nn.Linear(dim_leaf_emb // 2, dim_leaf_emb // 4)
-        # self.deep3 = nn.Linear(num_trees * dim_leaf_emb // 4, num_trees * dim_leaf_emb // 8)
         self.concat_wide = concat_wide
         if concat_wide:
             self.ffn = nn.Linear(dim_leaf_emb // 4 + (num_trees * dim_leaf_emb), 1)
@@ -119,9 +115,10 @@ class NFM(nn.Module):
         return out
 
 
+# 递归part: emb reshape 后成为x_0, 然后每一层结果和自己元素乘 变成下一层；  3D-->2D-->2D-->...;
 class DeepCross(nn.Module):
 
-    def __init__(self, num_uniq_leaf, num_trees, dim_leaf_emb, num_layers):
+    def __init__(self, num_uniq_leaf, num_trees, dim_leaf_emb, num_layers, concat_wide):
         super(DeepCross, self).__init__()
         self.Emb = nn.Embedding(num_uniq_leaf, dim_leaf_emb)
         self.layer_paras = []
@@ -133,10 +130,15 @@ class DeepCross(nn.Module):
 
         self.deep1 = nn.Linear(dim_leaf_emb * num_trees, dim_leaf_emb // 2)
         self.deep2 = nn.Linear(dim_leaf_emb // 2, dim_leaf_emb // 4)
-        self.ffn = nn.Linear(dim_leaf_emb // 4, 1)
+        self.concat_wide = concat_wide
+        if concat_wide:
+            out_dim = dim_leaf_emb // 4 + num_trees * dim_leaf_emb
+        else:
+            out_dim = dim_leaf_emb // 4
+        self.ffn = nn.Linear(out_dim, 1)
         assert dim_leaf_emb // 4 >= 2
 
-    def _cross_layer(self, x0, x, w, b, bias=False):
+    def _cross_layer(self, x0, x, w, b, bias):
         assert len(x.size()) == 2
         assert len(x0.size()) == 2
         if bias:
@@ -153,7 +155,7 @@ class DeepCross(nn.Module):
         # cross & residual layer;
         temp_x = x0
         for layer, paras in enumerate(self.layer_paras):
-            cross_x = self._cross_layer(x0, temp_x, paras[0], paras[1])  # [bs,F]
+            cross_x = self._cross_layer(x0, temp_x, paras[0], paras[1], True)  # [bs,F]
             if layer % 2 == 0:
                 temp_x = temp_x + cross_x
             else:
@@ -161,8 +163,10 @@ class DeepCross(nn.Module):
 
         x = F.relu(self.deep1(temp_x))
         x = F.relu(self.deep2(x))
-        logits = F.sigmoid(self.ffn(x))
-        return logits
+        if self.concat_wide:
+            x = torch.cat([x, x0], dim=1)
+        out = F.sigmoid(self.ffn(x))
+        return out
 
 
 # 排列组合操作爆炸 itertools.combinations(idx, 2)
@@ -202,27 +206,34 @@ class AFM(nn.Module):
         return logits
 
 
-# xDeepFM 层
+
+
+# 直接把立方体Zk 压缩成 num_filters 个点;
+# kernel die;
 class CinLayer(nn.Module):
 
     def __init__(self, num_filters, ts_0, ts_k):
         # ts_0 代表x_0时间长度， ts_k 代表第k 个layer的时间长度
         super(CinLayer, self).__init__()
+        self.num_filters = num_filters
         self.conv = nn.Conv1d(1, num_filters, (ts_0, ts_k), stride=ts_k)
 
     def forward(self, x_0, x_k):
-        # x_0: bs, ts_0, f
-        # x_k: bs, ts_k, f
+        # x_0: bs, ts_0, f;
+        # x_k: bs, ts_k, f;
         _, ts_0, _ = x_0.shape
         bs, ts_k, f = x_k.shape
-        z = torch.einsum('btf,byf->bfty', x_0, x_k).contiguous().view(bs, -1, ts_0, f * ts_k)  # [bs, 1, ts_0, ts_k*F]
-        out = self.conv(z).squeeze()
-        return out  # [bs, ts_k_new, f]
+        print('start cin ... ')
+        z = torch.einsum('btf,byf->bfty', x_0, x_k)  # [bs, f, ts, ty]
+        print(z.shape)
+        z = z.contiguous().view(bs, 1, ts_0, f * ts_k)  # [bs, 1, ts, ty*F] # to be check;
+        z = self.conv(z).squeeze()
+        return z  # [bs, num_filters, F]
 
 
 class xDeepFM(nn.Module):
 
-    def __init__(self, num_layers, layer_filters, num_uniq_leaf, num_trees, dim_leaf_emb):
+    def __init__(self, num_layers, layer_filters, num_uniq_leaf, num_trees, dim_leaf_emb, concat_wide):
         super(xDeepFM, self).__init__()
         self.Emb = nn.Embedding(num_uniq_leaf, dim_leaf_emb)
 
@@ -235,19 +246,33 @@ class xDeepFM(nn.Module):
 
         ts_k_list = [num_trees]
         ts_k_list.extend(layer_filters[:-1])  # 每一层最开始的ts_k，第一层即ts_0, 随后每一层由上一层的 filter_num 决定;
-
+        print('ts_k_list:{}'.format(ts_k_list))
         self.layer_list = nn.ModuleList()
         for _, filters, ts_k in zip(range(num_layers), layer_filters, ts_k_list):
             self.layer_list.append(CinLayer(filters, ts_0=num_trees, ts_k=ts_k))
-        self.ffn = nn.Linear(sum(layer_filters), 1)  # 因为最后concat 的轴是 ts_k， ts_k 是每一层最后输出的新的ts轴，由每一层的filter_size 决定
+
+        self.concat_wide = concat_wide
+        if concat_wide:
+            out_dim = num_layers * dim_leaf_emb + num_trees * dim_leaf_emb
+        else:
+            out_dim = num_layers * dim_leaf_emb
+        self.ffn = nn.Linear(out_dim, 1)  # 因为最后concat 的轴是 ts_k， ts_k 是每一层最后输出的新的ts轴，由每一层的filter_size 决定
 
     def forward(self, x):
-        x0 = self.Emb(x)  # bs, ts_0, F
-        xk = x0
-        layer_out = []
+        x0 = xk = self.Emb(x)  # bs, ts_0, F
+        bs, _, _ = x0.shape
+
+        layer_out = None
         for cin_model in self.layer_list:
-            xk = cin_model(x0, xk)  # [bs, ts_k, F]
-            layer_out.append(xk.sum(dim=1))  # sum pooling [bs, ts_k]
-        out = torch.cat(layer_out, dim=-1)
-        logits = F.sigmoid(self.ffn(out))
-        return logits
+            xk = cin_model(x0, xk)  # [bs, num_filters, F]
+            if layer_out is None:
+                layer_out = xk.sum(dim=1)  # bs, F
+            else:
+                layer_out = torch.cat([layer_out, xk.sum(dim=1)], dim=-1)
+            print('layer_out shape:{}'.format(layer_out.shape))
+        print('wide part shape:{}'.format(x0.view(bs, -1).shape))
+        if self.concat_wide:
+            print('x0 shape:{}'.format(x0.shape))
+            layer_out = torch.cat([layer_out, x0.view(bs, -1)], dim=1)
+        print('final shape:{}'.format(layer_out.shape))
+        return F.sigmoid(self.ffn(layer_out))
