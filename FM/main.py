@@ -19,6 +19,8 @@ class Main:
                  model_name, concat_wide):
         assert model_name in ['WideDeep', 'DeepFM', 'NFM', 'DeepCross', 'AFM', 'xDeepFM']
         self.model_name = model_name
+        self.emb_size = emb_size
+        self.concat_wide = concat_wide
         self.pre_defined_idx = pre_defined_idx  # 更训练gbdt 时的样本保持一致；相同的train,val,test;
         self.gbdt_model = gbdt_model
         if isinstance(data_or_dataroot, str):
@@ -87,11 +89,21 @@ class Main:
             self.verbose = 0
         if save_log:
             dir_path = os.getcwd() + '/run_log_dir/'
-            print("Created directory：" + "run_log_dir")
+            print("train log will be saved in directory：" + "run_log_dir")
             if not os.path.exists(dir_path):
                 os.makedirs(dir_path)
             file = open(dir_path + '{}_logs{}.txt'.format(self.model_name,
                                                           time.strftime("%Y-%m-%d_%H:%M:%S", time.localtime())), 'w')
+            file.writelines(
+                '------------------class init paras------------------\nemb_size{}\nmodel_name:{}\nmodel_save_dir:{}\nconcat_wide:{}\n'.format(
+                    self.emb_size, self.model_name, self.model_save_dir,
+                    self.concat_wide))
+
+            file.writelines(
+                '\n------------------train paras------------------\nepoch:{}\nbatch_size:{}\nlr:{}\nweight_decay:{}\nverbose:{}\nsave_model:{}\neval_full_epoch:{}\n'.format(
+                    epoch, batch_size,
+                    lr, weight_decay, verbose,
+                    save_model, eval_full_epoch))
         else:
             file = None
         self.train_loader = DataLoader(dataset=self.train_dataset, batch_size=batch_size)
@@ -191,7 +203,7 @@ class Main:
                                                                                    self.train_auc, val_auc))
             if log_file is not None:
                 log_file.writelines(
-                    '\n--------------------------------batch_num:{}/{}----------------------------------------\n'.format(
+                    '\n------------------------------batch_num:{}/{}-------------------------------------\n'.format(
                         batch_idx, len(self.train_loader.dataset) // self.train_loader.batch_size))
                 log_file.writelines('train_loss:{}  valid:loss:{}\ntrain_auc:{} valid_auc:{}'.format(self.train_loss,
                                                                                                      val_loss,
@@ -212,5 +224,3 @@ class Main:
         x = torch.tensor(x)
         output = self.predict(x, load_path)
         return roc_auc_score(y, output.detach().numpy().flatten())
-
-
