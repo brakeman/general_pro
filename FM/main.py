@@ -16,7 +16,7 @@ warnings.filterwarnings("ignore")
 class Main:
 
     def __init__(self, gbdt_model, pre_defined_idx, device, data_or_dataroot, emb_size, model_save_dir,
-                 model_name='WideDeep'):
+                 model_name, concat_wide):
         assert model_name in ['WideDeep', 'DeepFM', 'NFM', 'DeepCross', 'AFM', 'xDeepFM']
         self.model_name = model_name
         self.pre_defined_idx = pre_defined_idx  # 更训练gbdt 时的样本保持一致；相同的train,val,test;
@@ -46,13 +46,14 @@ class Main:
         elif model_name == 'DeepFM':
             self.model = DeepFM(self.leaf_num_per_tree * self.num_trees,
                                 self.num_trees,
-                                emb_size).to(device)
+                                emb_size,
+                                concat_wide).to(device)
 
         elif model_name == 'NFM':
             self.model = NFM(self.leaf_num_per_tree * self.num_trees,
                              self.num_trees,
                              emb_size,
-                             concat_wide=True).to(device)
+                             concat_wide).to(device)
 
         elif model_name == 'DeepCross':
             self.model = DeepCross(self.leaf_num_per_tree * self.num_trees,
@@ -72,7 +73,14 @@ class Main:
         print(self.model)
         self.criterion = nn.BCELoss()
 
-    def train(self, epoch, batch_size, lr, weight_decay, verbose, save_model, save_log, eval_full_epoch):
+    def train(self, epoch, batch_size, lr, weight_decay, verbose, save_model, save_log, eval_full_epoch, early_stop):
+        if early_stop:
+            self.early_stop = True
+        else:
+            self.early_stop = False
+        self.best_val_auc = -1
+        self.early_stop_tolerate = 0
+        self.stop_flag = False
         if verbose == 1:
             self.verbose = 1
         else:
@@ -95,10 +103,20 @@ class Main:
                                      betas=(0.9, 0.999), eps=1e-08, weight_decay=weight_decay)
         print('start training ......')
         for epoch_id in range(epoch):
+            if self.stop_flag is True:
+                break
             t0 = time.time()
             train_loss, val_loss, train_auc, val_auc = self._train_epoch(optimizer=optimizer, log_file=file)
 
             if verbose == 1:
+                if save_log:
+                    file.writelines(
+                        '\n-----------------------  epoch_id:{}/{} use:{} seconds  -------------------------\n'.format(
+                            epoch_id, epoch, time.time() - t0))
+                    file.writelines(
+                        'train_loss:{}  valid:loss:{} \n\ntrain_auc:{} valid_auc:{}\n'.format(train_loss, val_loss,
+                                                                                              train_auc, val_auc))
+
                 print('\n-----------------------  epoch_id:{}/{} use:{} seconds  --------------------------'.format(
                     epoch_id, epoch, time.time() - t0))
                 print(
@@ -120,6 +138,8 @@ class Main:
     def _train_epoch(self, optimizer, log_file=None):
         train_targets_list, train_logit_list, train_loss_list, batch_idx = [], [], [], None
         for batch_idx, data in enumerate(self.train_loader):
+            if self.stop_flag is True:
+                break
             inputs = data['x'].to(self.device)
             target = data['y'].to(self.device)
             optimizer.zero_grad()
@@ -153,6 +173,17 @@ class Main:
                     break
             val_loss = np.mean(val_loss_list)
             val_auc = roc_auc_compute(torch.cat(val_target_list), torch.cat(val_logit_list))
+            if val_auc >= self.best_val_auc:
+                self.best_val_auc = val_auc
+            else:
+                self.early_stop_tolerate += 1
+
+            if (self.early_stop_tolerate == 5) and (self.early_stop is True):
+                print('early_stop_tolerate = 5, with best val_auc:{}'.format(self.best_val_auc))
+                if log_file:
+                    log_file.writelines('\nearly_stop_tolerate = 5, with best val_auc:{}'.format(self.best_val_auc))
+                self.stop_flag = True
+
         if self.verbose != 1:
             print('\n--------------------------------batch_num:{}/{}----------------------------------------'.format(
                 batch_idx, len(self.train_loader.dataset) // self.train_loader.batch_size))
@@ -160,7 +191,7 @@ class Main:
                                                                                    self.train_auc, val_auc))
             if log_file is not None:
                 log_file.writelines(
-                    '\n--------------------------------batch_num:{}/{}---------------------------------------\n'.format(
+                    '\n--------------------------------batch_num:{}/{}----------------------------------------\n'.format(
                         batch_idx, len(self.train_loader.dataset) // self.train_loader.batch_size))
                 log_file.writelines('train_loss:{}  valid:loss:{}\ntrain_auc:{} valid_auc:{}'.format(self.train_loss,
                                                                                                      val_loss,
@@ -181,3 +212,5 @@ class Main:
         x = torch.tensor(x)
         output = self.predict(x, load_path)
         return roc_auc_score(y, output.detach().numpy().flatten())
+
+
