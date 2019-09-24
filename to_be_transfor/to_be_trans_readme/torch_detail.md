@@ -100,7 +100,7 @@
                  
 ## 4. [torch 空洞卷积理解](https://github.com/vdumoulin/conv_arithmetic/blob/master/README.md) 
 所有代码跟上面完全一致，只有一个参数dilation 改为2；
-结果分析：由于dilation =2, 故平面卷积核在ts维度插入一列zero vector; 然后正常去跟paded input 做卷积；但是这里出现了信息在时间上的泄漏，卷积核第一次移动，看到了ts=0, ts=2； 卷积核第二次移动，看到了[ts=1, ts=3], 已知ts=3是数据最后一个 ts, 输出不可以看到，故泄漏；
+结果分析：由于dilation =2, 故平面卷积核在ts维度插入一列zero vector; 然后正常去跟paded input 做卷积；但是这里出现了信息在时间上的泄漏，卷积核第一次移动，看到了ts=0, ts=2； 卷积核第二次移动，看到了[ts=1, ts=3], 已知ts=3是数据最后一个 ts, 输出不可以看到，故泄漏； 所以不是随便dilation的，目测需要配合合适的padding;
 
 
         input:

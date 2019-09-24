@@ -23,3 +23,5 @@
     具体公式如图：![Drag Racing](../pics/rcnn_1.png)
 
 - 模型结构 还没看懂； 整体见图：![Drag Racing](../pics/rcnn_2.png)
+- to be done: 模型结构
+- to be done: 训练测试场景差异
