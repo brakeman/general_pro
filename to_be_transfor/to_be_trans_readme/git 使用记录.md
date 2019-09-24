@@ -14,5 +14,11 @@
 - git reset --mixed HEAD~1;  # 把版本库回滚到上一个版本；
 	- mixed : 不改变工作区
 	- hard: 工作区，暂存区， 版本库 全回滚；
-	- soft: 只会滚版本库，不改变工作区，暂存区；
+	- soft: 只会滚版本库，不改变工作区，存区；
 
+
+### 如果把错误方案add了，但是工作区已经修改正确，怎么办？
+- 其中一个办法是 
+	- git commit -m 'temp wrong commit'
+	- git reset --mixed HEAD~1
+	- git add ...
