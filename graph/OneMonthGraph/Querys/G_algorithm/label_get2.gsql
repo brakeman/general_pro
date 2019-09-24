@@ -1,0 +1,8 @@
+use graph OneMonthNet
+CREATE OR REPLACE QUERY label_get2(DATETIME start_date, DATETIME end_date, String loan_type) FOR GRAPH OneMonthNet
+{
+    init = {Loan.*};
+    loanlabelSHOW = select t from init:t where t.funddate between start_date and end_date and t.loanstyle == loan_type;
+    print loanlabelSHOW;
+}
+INSTALL QUERY label_get2 

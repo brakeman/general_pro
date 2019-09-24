@@ -1,0 +1,39 @@
+use graph OneMonthNet
+create or replace query check_device() for graph OneMonthNet
+{
+    SumAccum<INT> @@count_device;
+    SumAccum<INT> @@count_idfv;
+    SumAccum<INT> @@count_idfa;
+    SumAccum<INT> @@count_imei;
+    SumAccum<INT> @@count_imsi;
+    SumAccum<INT> @@count_mac;
+    SumAccum<INT> @@count_android;
+    init = {User.*};
+    result = select s from init:s -(any:e)->:v
+    ACCUM CASE
+        when v.type == "Device" then
+            @@count_device += 1
+        when v.type == "Idfv_ios" then
+            @@count_idfv += 1
+        when v.type == "Idfa_ios" then
+            @@count_idfa += 1
+        when v.type == "Imei_android" then
+            @@count_imei += 1
+        when v.type == "Imsi_android" then
+            @@count_imsi += 1
+        when v.type == "Mac_android" then
+            @@count_mac += 1
+        when v.type == "Androidid_android" then
+            @@count_android += 1
+    end;
+    print @@count_device;
+    print @@count_idfv;
+    print @@count_idfa;
+    print @@count_imei;
+    print @@count_imsi;
+    print @@count_mac;
+    print @@count_android;
+}
+
+INSTALL query check_device
+run query check_device()

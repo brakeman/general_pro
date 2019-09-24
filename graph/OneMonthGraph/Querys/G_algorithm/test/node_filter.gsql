@@ -1,0 +1,20 @@
+use graph OneMonthNet
+
+CREATE OR REPLACE QUERY node_cutoff_filter(DATETIME start_t, DATETIME end_t, STRING node) FOR GRAPH OneMonthNet
+{
+    MaxAccum<DATETIME> @max_start;
+    MinAccum<DATETIME> @min_end;
+    init = {node.*};
+    save_target = select t from init:t
+    POST-Accum
+    t.@min_end += t.max_date,
+    t.@min_end += end_t,
+    t.@max_start += t.min_date,
+    t.@max_start += start_t,
+    t.temp_delete_bool = t.@max_start >= t.@min_end;
+    VV = select t from init:t where t.temp_delete_bool == True limit 10;
+    print VV;
+}
+
+INSTALL QUERY node_cutoff_filter
+#run QUERY node_cutoff_filter("2019-07-01 18:42:22", "2019-07-03 18:42:22", "Imsi_android")

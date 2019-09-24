@@ -1,0 +1,6 @@
+use graph OneMonthNet
+#run query update_max_min_date("User")
+#run query update_max_min_date("Device")
+#run QUERY node_cutoff_filter("2019-06-01 18:42:22", "2019-07-03 18:42:22", "Device")
+#run QUERY node_cutoff_filter("2019-06-01 18:42:22", "2019-07-03 18:42:22", "User")
+run query pageRank_attr(10,3,0.6)

@@ -1,0 +1,21 @@
+use graph OneMonthNet
+drop query pageRank_appr_files
+CREATE OR REPLACE QUERY pageRank_appr_files (STRING file_path) FOR GRAPH OneMonthNet
+{
+    SumAccum<float> @received_score = 0;
+    SetAccum<VERTEX> @@date_filter_nodes;
+    SetAccum<VERTEX> @@neighs_as_source;
+    test_set = SelectVertex(file_path, $0, PhoneNumber, ",", false);
+    #vv = select s from test_set:s ACCUM
+    #@@neighs_as_source += s.neighbors("to_call").filter(s.temp_save_bool==True); # 找到近似用户的邻居，这些邻居必须在给定cutoff范围内,这个bool变量应该在train的同时赋值，是为了逼近线上情景；
+    #Start2 = {@@neighs_as_source};
+    #pgSHOW = SELECT s FROM Start2:s -(to_call:e)-> :t ACCUM CASE
+    #WHEN s.outdegree("to_call") != 0 then
+    #    t.@received_score += s.temp_pgscore/(s.outdegree("to_call"))
+    #END;
+    Print test_set;
+}
+
+install query pageRank_appr_files
+
+

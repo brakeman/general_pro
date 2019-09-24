@@ -1,0 +1,37 @@
+USE GRAPH OneMonthNet
+drop job load_job1
+
+CREATE LOADING JOB load_job1 FOR GRAPH OneMonthNet
+{
+    DEFINE FILENAME f1;
+   #LOAD f1 TO VERTEX PhoneNumber VALUES($9, $2); # relativephone
+   #LOAD f1 TO VERTEX PhoneNumber VALUES($11, $2); # socialphone
+   #LOAD f1 TO VERTEX PhoneNumber VALUES($13, $2); # 'username' -- phoneNum in user table
+   #LOAD f1 TO VERTEX PhoneNumber VALUES($20, $2); # workphone
+   #LOAD f1 TO VERTEX PhoneNumber VALUES($25, $2); # 'usernameoriginal' -- phoneNum in user table
+   #LOAD TO EDGE to_call VALUES();
+   #LOAD TO EDGE to_sms VALUES();
+    LOAD f1 TO VERTEX User VALUES($0, $0, $2, _, _, _,_);
+    LOAD f1 TO VERTEX IdCard VALUES($5, $2);
+    LOAD f1 TO VERTEX IdCard VALUES($5, $1);
+    LOAD f1 TO VERTEX WorkUnit VALUES($19, $2);
+    LOAD f1 TO VERTEX WorkUnit VALUES($19, $1);
+    LOAD f1 TO VERTEX QQNumber VALUES($21, $2);
+    LOAD f1 TO VERTEX QQNumber VALUES($21, $1);
+    LOAD f1 TO VERTEX Email VALUES($23, $2);
+    LOAD f1 TO VERTEX Email VALUES($23, $1);
+    LOAD f1 TO VERTEX DebitCard VALUES($14, $2);
+    LOAD f1 TO EDGE UserHasPhone VALUES($0, $25, $2);
+    LOAD f1 TO EDGE UserHasPhone VALUES($0, $13, $2);
+    LOAD f1 TO EDGE user_to_workphone VALUES($0, $20, $2);
+    LOAD f1 TO EDGE User_to_relative VALUES($0, $9, $10, $2);
+    LOAD f1 TO EDGE User_to_social VALUES($0, $11, $12, $2);
+    LOAD f1 TO EDGE user_to_idcard VALUES($0, $25, $2);
+    LOAD f1 TO EDGE user_to_workunit VALUES($0, $19, $2);
+    LOAD f1 TO EDGE user_to_qq VALUES($0, $21, $2);
+    LOAD f1 TO EDGE user_to_email VALUES($0, $23, $2);
+    LOAD f1 TO EDGE user_to_debitcard VALUES($0, $14, $2);
+    LOAD f1 TO VERTEX DebitCard VALUES($14, $1);
+}
+
+run loading job load_job1 using f1 = "/data-0/qibo/Gdata/oneMonth/user_update_1901_1907.csv"

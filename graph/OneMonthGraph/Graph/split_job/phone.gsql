@@ -1,0 +1,43 @@
+USE GRAPH OneMonthNet
+
+
+drop job load_job1
+CREATE LOADING JOB load_job1 FOR GRAPH OneMonthNet
+{
+    DEFINE FILENAME f1;
+    LOAD f1 TO VERTEX PhoneNumber VALUES($0, $0, $1, _, _, _,_) using separator=",", header="false";
+    LOAD f1 TO VERTEX PhoneNumber VALUES($2, $2, $1, _, _, _,_) using separator=",", header="false";
+    LOAD f1 TO EDGE to_call VALUES($0, $2, $1) using separator=",", header="false";
+}
+
+
+drop job load_label
+CREATE LOADING JOB load_label FOR GRAPH OneMonthNet
+{
+    DEFINE FILENAME f1;
+    LOAD f1 TO VERTEX PhoneNumber VALUES($1, _, _, _, _, _, $0) using separator=",", header="false";
+}
+
+
+drop job delete_job
+CREATE LOADING JOB delete_job FOR GRAPH OneMonthNet
+{
+    DEFINE FILENAME f1;
+    DELETE VERTEX PhoneNumber(PRIMARY_ID $0) FROM f1;
+}
+
+run loading job load_job1 using f1 = "/data-0/qibo/Gdata/oneMonth/phoneRecord/qb_phonerecord_1905_1906.csv"
+run loading job delete_job using f1 = "/home/tigergraph/GraphProject/OneMonthGraph/Graph/split_job/delete_phone.csv"
+run loading job load_label using f1 = "/home/tigergraph/GraphProject/OneMonthGraph/Querys/pyG/data/temp1.csv"
+
+
+#run loading job load_job1 using f1 = "/data-0/qibo/Gdata/oneMonth/phoneRecord/qb_phonerecord_1901_1902.csv"
+#run loading job load_job1 using f1 = "/data-0/qibo/Gdata/oneMonth/phoneRecord/qb_phonerecord_1902_1903.csv"
+#run loading job load_job1 using f1 = "/data-0/qibo/Gdata/oneMonth/phoneRecord/qb_phonerecord_1903_1904.csv"
+#run loading job load_job1 using f1 = "/data-0/qibo/Gdata/oneMonth/phoneRecord/qb_phonerecord_1903_1904_part2.csv"
+#run loading job load_job1 using f1 = "/data-0/qibo/Gdata/oneMonth/phoneRecord/qb_phonerecord_remaining.csv"
+#run loading job load_job1 using f1 = "/data-0/gsm/qb_one_month/phoneRecord_halfYear/phoneRecord_1906_1907.csv"
+
+#run loading job load_job1 using f1 = "/data-0/qibo/Gdata/oneMonth/phoneRecord/qb_phonerecord_remaining.csv"
+#run loading job load_job1 using f1 = "/data-0/qibo/Gdata/oneMonth/phoneRecord/qb_phonerecord_1904_1905.csv"
+##run loading job load_job1 using f1 = "/data-0/qibo/Gdata/oneMonth/phoneRecord/qb_phonerecord_1905_1906.csv"

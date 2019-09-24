@@ -1,0 +1,172 @@
+USE GRAPH OneMonthNet
+drop job load_job5
+CREATE LOADING JOB load_job5 FOR GRAPH OneMonthNet
+{
+    DEFINE FILENAME f5;
+    LOAD f5 TO EDGE user_to_device VALUES($2, $3, $1) USING SEPARATOR=",", HEADER="false";
+    LOAD f5 TO EDGE user_to_idfv VALUES($2, $10, $1) USING SEPARATOR=",", HEADER="false";
+    LOAD f5 TO EDGE user_to_idfa VALUES($2, $11, $1) USING SEPARATOR=",", HEADER="false";
+    LOAD f5 TO EDGE user_to_androidid VALUES($2, $7, $1) USING SEPARATOR=",", HEADER="false";
+}
+run loading job load_job5 using f5 = "/data-0/gsm/qb_one_month/mobile_device_update_1901_1907.csv"
+
+
+drop job load_job5
+CREATE LOADING JOB load_job5 FOR GRAPH OneMonthNet
+{
+    DEFINE FILENAME f5;
+    LOAD f5 TO EDGE user_to_imsi VALUES($2, $7, $1) USING SEPARATOR=",", HEADER="false";
+    LOAD f5 TO EDGE user_to_imei VALUES($2, $6, $1) USING SEPARATOR=",", HEADER="false";
+    LOAD f5 TO EDGE user_to_mac VALUES($2, $8, $1) USING SEPARATOR=",", HEADER="false";
+}
+run loading job load_job5 using f5 = "/data-0/gsm/qb_one_month/mobile_device_update_1901_1907.csv"
+
+
+drop job load_job5
+CREATE LOADING JOB load_job5 FOR GRAPH OneMonthNet
+{
+    DEFINE FILENAME f5;
+    LOAD f5 TO VERTEX User VALUES($2, $2, $1, _, _ ,_,_) USING SEPARATOR=",", HEADER="false";
+    LOAD f5 TO VERTEX Device VALUES($3,$3, $1, _, _ ,_,_) USING SEPARATOR=",", HEADER="false";
+    LOAD f5 TO VERTEX Androidid_android VALUES($5,$5, $1, _,_,_,_) USING SEPARATOR=",", HEADER="false";
+    LOAD f5 TO VERTEX Idfv_ios VALUES($10,$10, $1,_,_,_,_) USING SEPARATOR=",", HEADER="false";
+}
+run loading job load_job5 using f5 = "/data-0/gsm/qb_one_month/mobile_device_update_1901_1907.csv"
+
+
+drop job load_job5
+CREATE LOADING JOB load_job5 FOR GRAPH OneMonthNet
+{
+    DEFINE FILENAME f5;
+    LOAD f5 TO VERTEX Idfa_ios VALUES($11,$11, $1,_,_,_,_) USING SEPARATOR=",", HEADER="false";
+    LOAD f5 TO VERTEX Mac_android VALUES($8,$8, $1,_,_,_,_) USING SEPARATOR=",", HEADER="false";
+    LOAD f5 TO VERTEX Imei_android VALUES($6,$6, $1,_,_,_,_) USING SEPARATOR=",", HEADER="false";
+    LOAD f5 TO VERTEX Imsi_android VALUES($7,$7, $1,_,_,_,_) USING SEPARATOR=",", HEADER="false";
+}
+run loading job load_job5 using f5 = "/data-0/gsm/qb_one_month/mobile_device_update_1901_1907.csv"
+
+
+drop job load_job6
+CREATE LOADING JOB load_job6 FOR GRAPH OneMonthNet
+{
+    DEFINE FILENAME f5;
+    LOAD f5 TO VERTEX User VALUES($2, _, $0, _, _ ,_,_) USING SEPARATOR=",", HEADER="false";
+    LOAD f5 TO VERTEX Device VALUES($3, _, $0, _, _ ,_,_) where $3 != "" USING SEPARATOR=",", HEADER="false";
+    LOAD f5 TO VERTEX Androidid_android VALUES($5, _, $0,_,_,_,_) where $5 != "" USING SEPARATOR=",", HEADER="false";
+    LOAD f5 TO VERTEX Idfv_ios VALUES($10, _, $0,_,_,_,_)where $10 != "" USING SEPARATOR=",", HEADER="false";
+}
+run loading job load_job6 using f5 = "/data-0/gsm/qb_one_month/mobile_device_update_1901_1907.csv"
+
+drop job load_job6
+CREATE LOADING JOB load_job6 FOR GRAPH OneMonthNet
+{
+    DEFINE FILENAME f5;
+    LOAD f5 TO VERTEX Idfa_ios VALUES($11, _, $0,_,_,_,_) where $11 != "" USING SEPARATOR=",", HEADER="false";
+    LOAD f5 TO VERTEX Mac_android VALUES($8, _, $0,_,_,_,_) where $8 != "" USING SEPARATOR=",", HEADER="false";
+    LOAD f5 TO VERTEX Imei_android VALUES($6, _, $0,_,_,_,_) where $6 != "" USING SEPARATOR=",", HEADER="false";
+    LOAD f5 TO VERTEX Imsi_android VALUES($7, _, $0,_,_,_,_)where $7 != "" USING SEPARATOR=",", HEADER="false";
+}
+run loading job load_job6 using f5 = "/data-0/gsm/qb_one_month/mobile_device_update_1901_1907.csv"
+
+
+
+drop job load_job6
+CREATE LOADING JOB load_job6 FOR GRAPH OneMonthNet
+{
+    DEFINE FILENAME f5;
+    LOAD f5 TO EDGE user_to_device VALUES($2, $3, $0) where $3 != "" USING SEPARATOR=",", HEADER="false";
+    LOAD f5 TO EDGE user_to_androidid VALUES($2, $5, $0) where $5 != "" USING SEPARATOR=",", HEADER="false";
+    LOAD f5 TO EDGE user_to_idfv VALUES($2, $10, $0) where $10 != "" USING SEPARATOR=",", HEADER="false";
+    LOAD f5 TO EDGE user_to_mac VALUES($2, $8, $0) where $8 != "" USING SEPARATOR=",", HEADER="false";
+    LOAD f5 TO EDGE user_to_idfa VALUES($2, $11, $0) where $11 != "" USING SEPARATOR=",", HEADER="false";
+    LOAD f5 TO EDGE user_to_imsi VALUES($2, $7, $0) where $7 != "" USING SEPARATOR=",", HEADER="false";
+    LOAD f5 TO EDGE user_to_imei VALUES($2, $6, $0) where $6 != "" USING SEPARATOR=",", HEADER="false";
+}
+
+run loading job load_job6 using f5 = "/data-0/gsm/qb_one_month/mobile_device_update_1901_1907.csv"
+USE GRAPH OneMonthNet
+drop job load_job2
+drop job load_job3
+drop job load_job4
+
+CREATE LOADING JOB load_job2 FOR GRAPH OneMonthNet
+{
+    DEFINE FILENAME f2;
+    LOAD f2 TO VERTEX Geohash VALUES($5, $1);
+}
+run loading job load_job2 using f2 = "/data-0/qibo/Gdata/oneMonth/geohash/qb_geohash_halfyear_1901_1907.csv"
+
+
+drop job load_job2
+CREATE LOADING JOB load_job2 FOR GRAPH OneMonthNet
+{
+    DEFINE FILENAME f2;
+    LOAD f2 TO EDGE user_to_geohash VALUES($2, $5, $1);
+}
+run loading job load_job2 using f2 = "/data-0/qibo/Gdata/oneMonth/geohash/qb_geohash_halfyear_1901_1907.csv"
+
+
+drop job load_job3
+CREATE LOADING JOB load_job3 FOR GRAPH OneMonthNet
+{
+    DEFINE FILENAME f3;
+    LOAD f3 TO VERTEX Loan VALUES($0,$0,$1,$2,$3,$4,$5,_,$6,_);
+}
+run loading job load_job3 using f3 = "/data-0/gsm/qb_one_month/loan_label_2_new_1901_1907.csv"
+
+
+drop job load_job3
+CREATE LOADING JOB load_job3 FOR GRAPH OneMonthNet
+{
+    DEFINE FILENAME f3;
+    LOAD f3 TO EDGE user_to_loan VALUES($1, $0);
+}
+run loading job load_job3 using f3 = "/data-0/gsm/qb_one_month/loan_label_2_new_1901_1907.csv"
+
+
+
+CREATE LOADING JOB load_job4 FOR GRAPH OneMonthNet
+{
+    DEFINE FILENAME f4;
+    LOAD f4 TO VERTEX Loan VALUES($0,$0,$1,$2,$3,$4,$5,_,$6,_);
+    LOAD f4 TO VERTEX User VALUES($1, $1, $3, _, _ ,_,_);
+}
+
+run loading job load_job4 using f4 = "/data-0/gsm/qb_one_month/loan_label_1_1901_1907.csv"
+USE GRAPH OneMonthNet
+drop job load_job1
+
+CREATE LOADING JOB load_job1 FOR GRAPH OneMonthNet
+{
+    DEFINE FILENAME f1;
+   #LOAD f1 TO VERTEX PhoneNumber VALUES($9, $2); # relativephone
+   #LOAD f1 TO VERTEX PhoneNumber VALUES($11, $2); # socialphone
+   #LOAD f1 TO VERTEX PhoneNumber VALUES($13, $2); # 'username' -- phoneNum in user table
+   #LOAD f1 TO VERTEX PhoneNumber VALUES($20, $2); # workphone
+   #LOAD f1 TO VERTEX PhoneNumber VALUES($25, $2); # 'usernameoriginal' -- phoneNum in user table
+   #LOAD TO EDGE to_call VALUES();
+   #LOAD TO EDGE to_sms VALUES();
+    LOAD f1 TO VERTEX User VALUES($0, $0, $2, _, _, _,_);
+    LOAD f1 TO VERTEX IdCard VALUES($5, $2);
+    LOAD f1 TO VERTEX IdCard VALUES($5, $1);
+    LOAD f1 TO VERTEX WorkUnit VALUES($19, $2);
+    LOAD f1 TO VERTEX WorkUnit VALUES($19, $1);
+    LOAD f1 TO VERTEX QQNumber VALUES($21, $2);
+    LOAD f1 TO VERTEX QQNumber VALUES($21, $1);
+    LOAD f1 TO VERTEX Email VALUES($23, $2);
+    LOAD f1 TO VERTEX Email VALUES($23, $1);
+    LOAD f1 TO VERTEX DebitCard VALUES($14, $2);
+    LOAD f1 TO EDGE UserHasPhone VALUES($0, $25, $2);
+    LOAD f1 TO EDGE UserHasPhone VALUES($0, $13, $2);
+    LOAD f1 TO EDGE user_to_workphone VALUES($0, $20, $2);
+    LOAD f1 TO EDGE User_to_relative VALUES($0, $9, $10, $2);
+    LOAD f1 TO EDGE User_to_social VALUES($0, $11, $12, $2);
+    LOAD f1 TO EDGE user_to_idcard VALUES($0, $25, $2);
+    LOAD f1 TO EDGE user_to_workunit VALUES($0, $19, $2);
+    LOAD f1 TO EDGE user_to_qq VALUES($0, $21, $2);
+    LOAD f1 TO EDGE user_to_email VALUES($0, $23, $2);
+    LOAD f1 TO EDGE user_to_debitcard VALUES($0, $14, $2);
+    LOAD f1 TO VERTEX DebitCard VALUES($14, $1);
+}
+
+run loading job load_job1 using f1 = "/data-0/qibo/Gdata/oneMonth/user_update_1901_1907.csv"

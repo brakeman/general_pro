@@ -1,0 +1,37 @@
+use graph OneMonthNet
+drop query count_userids
+
+CREATE QUERY count_userids() FOR GRAPH OneMonthNet {
+ListAccum<string> @@t1;
+ListAccum<string> @@t2;
+ListAccum<string> @@t3;
+ListAccum<string> @@t4;
+ListAccum<string> @@t5;
+
+start1 = {User.*};
+all_users = SELECT s FROM start1:s;
+
+s2 ={PhoneNumber.*};
+all_phone0 = select s from s2: s;
+
+#s3 ={IdCard.*};
+#all_phone1 = select s from s3: s
+#Accum @@t3 += s.card_number;
+
+#s4 ={WorkUnit.*};
+#all_phone2 = select s from s4: s
+#Accum @@t4 += s.compary_name;
+
+#s5 ={QQNumber.*};
+#all_phone3 = select s from s5: s
+#Accum @@t5 += s.q_number;
+
+#print all_users;
+print all_phone0;
+#print @@t3;
+#print @@t4;
+#print @@t5;
+}
+INSTALL QUERY count_userids
+RUN QUERY count_userids()
+

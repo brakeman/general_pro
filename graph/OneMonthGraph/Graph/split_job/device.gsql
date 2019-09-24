@@ -1,0 +1,19 @@
+USE GRAPH OneMonthNet
+
+drop job load_job1
+drop job load_job2
+CREATE LOADING JOB load_job1 FOR GRAPH OneMonthNet
+{
+    DEFINE FILENAME f1;
+    LOAD f1 TO EDGE device_to_device VALUES($0, $1) using separator=",", header="false";
+}
+
+
+CREATE LOADING JOB load_job2 FOR GRAPH OneMonthNet
+{
+    DEFINE FILENAME f1;
+    LOAD f1 TO VERTEX Device VALUES($1,$1,$0,_,_,$2) using separator=",", header="false"; 
+}
+
+run loading job load_job1 using f1 = "/home/tigergraph/GraphProject/OneMonthGraph/Querys/G_algorithm/pagerank/dir_device/device_relation.txt" 
+run loading job load_job2 using f1 = "/data-0/qibo/Gdata/oneMonth/device/device_log_1901_1907.csv" 

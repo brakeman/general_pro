@@ -1,0 +1,62 @@
+USE GRAPH OneMonthNet
+drop query conn_comp
+drop query conn_comp_check
+drop query cc_sub_date_filter
+
+
+CREATE OR REPLACE QUERY cc_sub_date_filter (DATETIME start_t, DATETIME end_t, STRING node) FOR GRAPH OneMonthNet RETURNS(SetAccum<VERTEX>)
+{
+    SetAccum<VERTEX<PhoneNumber>> @@phone;
+    init = {node.*};
+    save_target = select t from init:t
+    POST-ACCUM
+    FOREACH i IN t.datetime_set DO
+        IF (i BETWEEN start_t AND end_t) THEN
+            @@phone += t
+        END
+    END;
+    RETURN @@phone;
+}
+
+CREATE  QUERY conn_comp(DATETIME start_t, DATETIME end_t, STRING node) FOR GRAPH OneMonthNet
+{
+    MinAccum<int> @cc_id = 0;
+    SumAccum<int> @old_id = 0;
+    OrAccum<bool> @active;
+    MapAccum<int, int> @@compSizes;
+    SetAccum<VERTEX> @@filter_nodes;
+    @@filter_nodes += cc_sub_date_filter(start_t, end_t, node);
+    Start = {@@filter_nodes};   #  Start with all vertices of specified type(s)
+    S = SELECT x FROM Start:x
+    POST-ACCUM x.@cc_id = getvid(x), x.temp_save_bool=True, x.@old_id = getvid(x);
+    WHILE (Start.size()>0) DO
+        Start = SELECT t FROM Start:s -(to_call:e)-> :t where t.temp_save_bool==True
+        ACCUM t.@cc_id += s.@cc_id // If s has a smaller id than t, copy the id to t
+        POST-ACCUM
+        CASE WHEN t.@old_id != t.@cc_id THEN // If t's id has changed
+            t.@old_id = t.@cc_id,
+            t.@active = true
+        ELSE
+            t.@active = false
+        END
+        HAVING t.@active == true;
+    END;
+    Start = {@@filter_nodes};
+    Start = SELECT s FROM Start:s
+    POST-ACCUM @@compSizes += (s.@cc_id -> 1), s.cc_id = s.@cc_id;
+    PRINT @@compSizes;
+    PRINT Start;
+}
+
+
+CREATE  QUERY conn_comp_check(STRING file_path) FOR GRAPH OneMonthNet
+{
+    test_set = SelectVertex(file_path, $0, PhoneNumber, ",", false);
+    SetAccum<float> @node_cluster_id;
+    vv = select s from test_set:s ACCUM
+    s.@node_cluster_id += s.neighborAttribute("to_call", "PhoneNumber", "cc_id");
+}
+INSTALL QUERY cc_sub_date_filter
+INSTALL QUERY conn_comp
+INSTALL QUERY conn_comp_check
+#run query conn_comp("20190601", "20190602", "PhoneNumber")

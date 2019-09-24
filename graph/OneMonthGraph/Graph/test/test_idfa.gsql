@@ -1,0 +1,11 @@
+use graph OneMonthNet
+drop query check_device
+create or replace query check_device() for graph OneMonthNet
+{
+    init = {Idfa_ios.*};
+    result = select s from init:s;
+    print result;
+}
+
+INSTALL query check_device
+run query check_device()

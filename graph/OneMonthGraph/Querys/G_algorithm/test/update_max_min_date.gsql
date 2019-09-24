@@ -1,0 +1,13 @@
+use graph OneMonthNet
+CREATE OR REPLACE QUERY update_max_min_date(STRING node) FOR GRAPH OneMonthNet
+{
+    init = {node.*};
+    V = select t from init:t
+    POST-Accum
+    t.min_date = min(t.datetime_set),
+    t.max_date = max(t.datetime_set);
+    VV = select t from init:t limit 100;
+    print VV;
+}
+INSTALL QUERY update_max_min_date
+#run QUERY update_max_min_date("Device")

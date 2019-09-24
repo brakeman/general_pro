@@ -1,0 +1,57 @@
+use graph OneMonthNet
+drop query pageRank_appr
+drop query sub_query_phone1
+drop query sub_query_phone2
+CREATE OR REPLACE QUERY sub_query_phone1(DATETIME start_t, DATETIME end_t, STRING node) FOR GRAPH OneMonthNet RETURNS(SetAccum<VERTEX>)
+{
+    SetAccum<VERTEX<PhoneNumber>> @@phone;
+    init = {node.*};
+    save_target = select t from init:t
+    POST-ACCUM
+    FOREACH i IN t.datetime_set DO
+        IF (i BETWEEN start_t AND end_t) THEN
+            @@phone += t
+        END
+    END;
+    RETURN @@phone;
+}
+
+# 训练样本filter 函数，目的是 给要估计pg_score的节点提供已经被训练的到score这些节点的资源； 
+CREATE OR REPLACE QUERY sub_query_phone2(DATETIME start_t, DATETIME end_t, STRING node) FOR GRAPH OneMonthNet RETURNS(INT)
+{
+    SetAccum<VERTEX<PhoneNumber>> @@phone;
+    SumAccum<INT> @@fake = 1;
+    init = {node.*};
+    save_target = select t from init:t
+    POST-ACCUM
+    FOREACH i IN t.datetime_set DO
+        IF (i BETWEEN start_t AND end_t) THEN
+            t.temp_save_bool=True
+        END
+    END;
+    RETURN @@fake;
+}
+
+CREATE OR REPLACE QUERY pageRank_appr (DATETIME train_start_t, DATETIME train_end_t, DATETIME test_start_t, DATETIME test_end_t, STRING node) FOR GRAPH OneMonthNet
+{
+    SumAccum<float> @received_score = 0;
+    SetAccum<VERTEX> @@date_filter_nodes;
+    SetAccum<VERTEX> @@neighs_as_source;
+    SumAccum<float> @@fake_ = 0;
+    @@fake_ += sub_query_phone2(train_start_t, train_end_t, node); # 标记上 temp_save_bool
+    @@date_filter_nodes += sub_query_phone1(test_start_t, test_end_t, node); # 用于近似pg_score的用户；
+    Start = {@@date_filter_nodes};
+    vv = select s from Start:s ACCUM
+    @@neighs_as_source += s.neighbors("to_call").filter(s.temp_save_bool==True); # 找到近似用户的邻居，这些邻居必须在给定cutoff范围内，是为了逼近线上情景；
+    Start2 = {@@neighs_as_source};
+    pgSHOW = SELECT s FROM Start2:s -(to_call:e)-> :t ACCUM CASE
+    WHEN s.outdegree("to_call") != 0 then
+        t.@received_score += s.temp_pgscore/(s.outdegree("to_call"))
+    END;
+    Print pgSHOW;
+}
+
+install query sub_query_phone1
+install query sub_query_phone2
+install query pageRank_appr
+

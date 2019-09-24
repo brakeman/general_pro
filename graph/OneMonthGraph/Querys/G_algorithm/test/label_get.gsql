@@ -1,0 +1,9 @@
+use graph OneMonthNet
+CREATE OR REPLACE QUERY label_get(DATETIME start_date) FOR GRAPH OneMonthNet
+{
+    init = {Loan.*};
+    loanlabelSHOW = select t from init:t where t.funddate > start_date;
+    print loanlabelSHOW;
+}
+INSTALL QUERY label_get 
+run QUERY label_get("2019-01-24 00:00:00")

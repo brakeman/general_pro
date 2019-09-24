@@ -1,0 +1,15 @@
+use graph OneMonthNet
+CREATE OR REPLACE QUERY label_get2(DATETIME start_date, DATETIME end_date, String loan_type) FOR GRAPH OneMonthNet
+{   SumAccum<Int> @@count_;
+    SumAccum<Int> @@count_2;
+    init = {Loan.*};
+    loanlabelSHOW = select t from init:t where t.funddate between start_date and end_date and t.loanstyle == loan_type
+    Accum
+    @@count_2 += 1,
+    if t.default_now_label == -1 then
+      @@count_+=1
+    end;
+    print @@count_, @@count_2;
+}
+INSTALL QUERY label_get2 
+run query label_get2("2019-06-01 00:00:00","2019-07-01 00:00:00", "绿卡30天1期")

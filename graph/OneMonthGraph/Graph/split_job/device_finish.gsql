@@ -1,0 +1,64 @@
+USE GRAPH OneMonthNet
+drop job load_job5
+
+CREATE LOADING JOB load_job5 FOR GRAPH OneMonthNet
+{
+    DEFINE FILENAME f5;
+    LOAD f5 TO EDGE user_to_device VALUES($2, $3, $1) where $3 != "" USING SEPARATOR=",", HEADER="false";
+    LOAD f5 TO EDGE user_to_idfv VALUES($2, $10, $1) where $10 != "" USING SEPARATOR=",", HEADER="false";
+    LOAD f5 TO EDGE user_to_idfa VALUES($2, $11, $1) where $11 != "" USING SEPARATOR=",", HEADER="false";
+    LOAD f5 TO EDGE user_to_imsi VALUES($2, $7, $1) where $7 != "" USING SEPARATOR=",", HEADER="false";
+    LOAD f5 TO EDGE user_to_imei VALUES($2, $6, $1) where $6 != "" USING SEPARATOR=",", HEADER="false";
+    LOAD f5 TO EDGE user_to_mac VALUES($2, $8, $1) where $8 != "" USING SEPARATOR=",", HEADER="false";
+    LOAD f5 TO EDGE user_to_androidid VALUES($2, $5, $1) where $5 != "" USING SEPARATOR=",", HEADER="false";
+}
+run loading job load_job5 using f5 = "/data-0/gsm/qb_one_month/mobile_device_update_1901_1907.csv"
+
+
+USE GRAPH OneMonthNet
+drop job load_job5
+CREATE LOADING JOB load_job5 FOR GRAPH OneMonthNet
+{
+    DEFINE FILENAME f5;
+    LOAD f5 TO VERTEX User VALUES($2, $2, $1, _, _ ,_,_) where $2 != "" USING SEPARATOR=",", HEADER="false";
+    LOAD f5 TO VERTEX Device VALUES($3,$3, $1, _, _ ,_,_) where $3 != "" USING SEPARATOR=",", HEADER="false";
+    LOAD f5 TO VERTEX Androidid_android VALUES($5,$5, $1, _,_,_,_) where $5 != "" USING SEPARATOR=",", HEADER="false";
+    LOAD f5 TO VERTEX Idfv_ios VALUES($10,$10, $1,_,_,_,_) where $10 != "" USING SEPARATOR=",", HEADER="false";
+    LOAD f5 TO VERTEX Idfa_ios VALUES($11,$11, $1,_,_,_,_) where $11 != "" USING SEPARATOR=",", HEADER="false";
+    LOAD f5 TO VERTEX Mac_android VALUES($8,$8, $1,_,_,_,_) where $8 != "" USING SEPARATOR=",", HEADER="false";
+    LOAD f5 TO VERTEX Imei_android VALUES($6,$6, $1,_,_,_,_) where $6 != "" USING SEPARATOR=",", HEADER="false";
+    LOAD f5 TO VERTEX Imsi_android VALUES($7,$7, $1,_,_,_,_) where $7 != "" USING SEPARATOR=",", HEADER="false";
+}
+run loading job load_job5 using f5 = "/data-0/gsm/qb_one_month/mobile_device_update_1901_1907.csv"
+
+USE GRAPH OneMonthNet
+drop job load_job6
+CREATE LOADING JOB load_job6 FOR GRAPH OneMonthNet
+{
+    DEFINE FILENAME f5;
+    LOAD f5 TO VERTEX User VALUES($2, _, $0, _, _ ,_,_) where $2 != "" USING SEPARATOR=",", HEADER="false";
+    LOAD f5 TO VERTEX Device VALUES($3, _, $0, _, _ ,_,_) where $3 != "" USING SEPARATOR=",", HEADER="false";
+    LOAD f5 TO VERTEX Androidid_android VALUES($5, _, $0,_,_,_,_) where $5 != "" USING SEPARATOR=",", HEADER="false";
+    LOAD f5 TO VERTEX Idfv_ios VALUES($10, _, $0,_,_,_,_) where $10 != "" USING SEPARATOR=",", HEADER="false";
+    LOAD f5 TO VERTEX Idfa_ios VALUES($11, _, $0,_,_,_,_) where $11 != "" USING SEPARATOR=",", HEADER="false";
+    LOAD f5 TO VERTEX Mac_android VALUES($8, _, $0,_,_,_,_) where $8 != "" USING SEPARATOR=",", HEADER="false";
+    LOAD f5 TO VERTEX Imei_android VALUES($6, _, $0,_,_,_,_) where $6 != "" USING SEPARATOR=",", HEADER="false";
+    LOAD f5 TO VERTEX Imsi_android VALUES($7, _, $0,_,_,_,_) where $7 != "" USING SEPARATOR=",", HEADER="false";
+}
+
+run loading job load_job6 using f5 = "/data-0/gsm/qb_one_month/mobile_device_update_1901_1907.csv"
+USE GRAPH OneMonthNet
+drop job load_job6
+CREATE LOADING JOB load_job6 FOR GRAPH OneMonthNet
+{
+    DEFINE FILENAME f5;
+    LOAD f5 TO EDGE user_to_device VALUES($2, $3, $0) where $3 != "" USING SEPARATOR=",", HEADER="false";
+    LOAD f5 TO EDGE user_to_androidid VALUES($2, $5, $0) where $5 != "" USING SEPARATOR=",", HEADER="false";
+    LOAD f5 TO EDGE user_to_idfv VALUES($2, $10, $0) where $10 != "" USING SEPARATOR=",", HEADER="false";
+    LOAD f5 TO EDGE user_to_mac VALUES($2, $8, $0) where $8 != "" USING SEPARATOR=",", HEADER="false";
+    LOAD f5 TO EDGE user_to_idfa VALUES($2, $11, $0) where $11 != "" USING SEPARATOR=",", HEADER="false";
+    LOAD f5 TO EDGE user_to_imsi VALUES($2, $7, $0) where $7 != "" USING SEPARATOR=",", HEADER="false";
+    LOAD f5 TO EDGE user_to_imei VALUES($2, $6, $0) where $6 != "" USING SEPARATOR=",", HEADER="false";
+}
+
+run loading job load_job6 using f5 = "/data-0/gsm/qb_one_month/mobile_device_update_1901_1907.csv"

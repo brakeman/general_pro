@@ -1,0 +1,40 @@
+use graph OneMonthNet
+# 1.
+CREATE OR REPLACE QUERY sub_query_phone() FOR GRAPH OneMonthNet RETURNS(SetAccum<VERTEX>)
+{
+    SetAccum<VERTEX> @@unique_nodes;
+    init = {PhoneNumber.*};
+# save = select s from init:s -((user_to_device|user_to_androidid|user_to_idfv|user_to_idfa|user_to_mac|user_to_imei|user_to_imsi):e)->:t WHERE (s.temp_delete_bool == False and t.temp_delete_bool == False)
+    save = select s from init:s WHERE s.temp_delete_bool == False
+    ACCUM @@unique_nodes+=s
+    #POST-Accum @@unique_nodes+=s;
+    RETURN @@unique_nodes;
+}
+# main query
+CREATE OR REPLACE QUERY pageRank_phone (FLOAT maxChange, INT maxIter, FLOAT damping) FOR GRAPH OneMonthNet 
+{
+    MaxAccum<float> @@maxDiff = 9999; # max score change in an iteration
+    SumAccum<float> @received_score = 0; # sum of scores each vertex receives FROM neighbors
+    SumAccum<float> @score = 1;   # Initial score for every vertex is 1.
+    SetAccum<VERTEX> @@testSet;
+    @@testSet += sub_query_phone();
+    Start = {@@testSet};   #  Start with all vertices of specified type(s)
+    WHILE @@maxDiff > maxChange LIMIT maxIter DO
+        @@maxDiff = 0;
+        V = SELECT s FROM Start:s -(to_call:e)-> :t
+        ACCUM CASE
+        WHEN s.outdegree("to_call") != 0 then
+            t.@received_score += s.@score/(s.outdegree("to_call"))
+        END
+        POST-ACCUM
+        s.@score = (1.0-damping) + damping * s.@received_score,
+        s.@received_score = 0,
+        @@maxDiff += abs(s.@score - s.@score');
+    END; # END WHILE loop
+    #pgSHOW = SELECT s FROM Start:s where s.temp_delete_bool == False and abs(s.@score - 1) > 0.000000001
+    pgSHOW = SELECT s FROM Start:s where s.temp_delete_bool == False
+    POST-ACCUM s.temp_pgscore = s.@score
+    ORDER BY s.@score DESC;
+    Print pgSHOW;
+}
+install query *

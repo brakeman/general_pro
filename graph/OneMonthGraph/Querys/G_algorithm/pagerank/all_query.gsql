@@ -1,0 +1,79 @@
+use graph OneMonthNet
+# 1.
+CREATE OR REPLACE QUERY update_max_min_date(STRING node) FOR GRAPH OneMonthNet
+{
+    init = {node.*};
+    V = select t from init:t
+    POST-Accum
+    t.min_date = min(t.datetime_set),
+    t.max_date = max(t.datetime_set);
+    UPDATE_SHOW = select t from init:t limit 2;
+    print UPDATE_SHOW;
+}
+
+# 2.
+CREATE OR REPLACE QUERY node_cutoff_filter(DATETIME start_t, DATETIME end_t, STRING node) FOR GRAPH OneMonthNet
+{
+    MaxAccum<DATETIME> @max_start;
+    MinAccum<DATETIME> @min_end;
+    init = {node.*};
+    save_target = select t from init:t
+    POST-Accum
+    t.@min_end += t.max_date,
+    t.@min_end += end_t,
+    t.@max_start += t.min_date,
+    t.@max_start += start_t,
+    t.temp_delete_bool = t.@max_start >= t.@min_end;
+    node_filter_SHOW = select t from init:t limit 100;
+    #node_filter_SHOW = select t from init:t where t.temp_delete_bool == True limit 2;
+    print node_filter_SHOW;
+}
+# INSTALL QUERY node_cutoff_filter
+# 3. 
+CREATE OR REPLACE QUERY sub_query() FOR GRAPH OneMonthNet RETURNS(SetAccum<VERTEX>)
+{
+    SetAccum<VERTEX> @@unique_nodes;
+    init = {User.*};
+# save = select s from init:s -((user_to_device|user_to_androidid|user_to_idfv|user_to_idfa|user_to_mac|user_to_imei|user_to_imsi):e)->:t WHERE (s.temp_delete_bool == False and t.temp_delete_bool == False)
+    save = select s from init:s -(user_to_device:e)->:t WHERE (s.temp_delete_bool == False and t.temp_delete_bool == False)
+    ACCUM @@unique_nodes+=t
+    POST-Accum @@unique_nodes+=s;
+    RETURN @@unique_nodes;
+}
+# 4.
+# main query
+CREATE OR REPLACE QUERY pageRank_attr (FLOAT maxChange, INT maxIter, FLOAT damping) FOR GRAPH OneMonthNet 
+{
+    MaxAccum<float> @@maxDiff = 9999; # max score change in an iteration
+    SumAccum<float> @received_score = 0; # sum of scores each vertex receives FROM neighbors
+    SumAccum<float> @score = 1;   # Initial score for every vertex is 1.
+    SetAccum<VERTEX> @@testSet;
+    @@testSet += sub_query();
+    Start = {@@testSet};   #  Start with all vertices of specified type(s)
+    WHILE @@maxDiff > maxChange LIMIT maxIter DO
+        @@maxDiff = 0;
+        V = SELECT s FROM Start:s -(user_to_device:e)-> :t
+        ACCUM CASE 
+        WHEN s.outdegree("user_to_device") != 0 then
+            t.@received_score += s.@score/(s.outdegree("user_to_device"))
+        END 
+        POST-ACCUM
+        s.@score = (1.0-damping) + damping * s.@received_score,
+        s.@received_score = 0,
+        @@maxDiff += abs(s.@score - s.@score');
+    END; # END WHILE loop
+    #pgSHOW = SELECT s FROM Start:s where s.temp_delete_bool == False and abs(s.@score - 1) > 0.000000001
+    pgSHOW = SELECT s FROM Start:s where s.temp_delete_bool == False 
+    POST-ACCUM s.temp_pgscore = s.@score
+    ORDER BY s.@score DESC;
+    Print pgSHOW;
+}
+# 5.
+CREATE OR REPLACE QUERY label_get2(DATETIME start_date, DATETIME end_date, String loan_type) FOR GRAPH OneMonthNet
+{
+    init = {Loan.*};
+    loanlabelSHOW = select t from init:t where t.funddate between start_date and end_date and t.loanstyle == loan_type;
+    print loanlabelSHOW;
+}
+# INSTALL QUERY label_get2 
+install query *

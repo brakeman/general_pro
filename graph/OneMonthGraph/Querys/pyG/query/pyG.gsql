@@ -1,0 +1,90 @@
+USE GRAPH OneMonthNet
+drop query conn_comp
+drop query pyG_pre
+drop query get_default_now 
+drop query pyG_pre_ori
+drop query check_phone
+drop query conn_comp_check
+drop query node_feat_sub_date_filter
+
+
+CREATE OR REPLACE QUERY node_feat_sub_date_filter(DATETIME start_t, DATETIME end_t, STRING node) FOR GRAPH OneMonthNet RETURNS(SetAccum<VERTEX>)
+{
+    SetAccum<VERTEX<PhoneNumber>> @@phone;
+    init = {node.*};
+    save_target = select t from init:t
+    POST-ACCUM
+    FOREACH i IN t.datetime_set DO
+        IF (i BETWEEN start_t AND end_t) THEN
+            @@phone += t
+        END
+    END;
+    RETURN @@phone;
+}
+
+
+CREATE QUERY check_phone(Vertex<PhoneNumber> m1) FOR GRAPH OneMonthNet
+{
+    Start = {m1};
+    vv = select t from Start:s -(to_call:e)-> :t;
+    print vv;
+}
+
+
+CREATE QUERY get_default_now(datetime start_t, datetime end_t, string node) FOR GRAPH OneMonthNet
+{
+    SumAccum<INT> @node_all_labels;
+    SetAccum<VERTEX> @@filter_nodes;
+    @@filter_nodes += node_feat_sub_date_filter(start_t, end_t, node);
+    Start = {@@filter_nodes};
+    vv = select s from Start:s -(to_call:e)-> :t where e.occur_date between start_t and end_t
+    POST-ACCUM
+    s.@node_all_labels += s.default_now;
+    print vv[vv.@node_all_labels];
+}
+
+
+CREATE QUERY pyG_pre_ori(datetime start_t, datetime end_t, string node) FOR GRAPH OneMonthNet
+{
+    MapAccum<DATETIME, ListAccum<STRING>> @node_date_calls;
+    SetAccum<VERTEX> @@filter_nodes;
+    @@filter_nodes += node_feat_sub_date_filter(start_t, end_t, node);
+    Start = {@@filter_nodes};
+    vv = select s from Start:s -(to_call:e)-> :t where e.occur_date between start_t and end_t
+    ACCUM
+    s.@node_date_calls += (e.occur_date -> t.prim_id);
+    print vv[vv.@node_date_calls];
+}
+
+
+CREATE QUERY pyG_pre(datetime start_t, datetime end_t, string node) FOR GRAPH OneMonthNet
+{
+    SetAccum<STRING> @node_all_neighs;
+    SetAccum<VERTEX> @@filter_nodes;
+    @@filter_nodes += node_feat_sub_date_filter(start_t, end_t, node);
+    Start = {@@filter_nodes};
+    vv = select s from Start:s -(to_call:e)-> :t where e.occur_date between start_t and end_t
+    ACCUM
+    s.@node_all_neighs += t.prim_id;
+    print vv[vv.@node_all_neighs];
+}
+
+
+CREATE QUERY conn_comp_check(STRING file_path) FOR GRAPH OneMonthNet
+{
+    SetAccum<float> @node_cluster_id;
+    test_set = SelectVertex(file_path, $0, PhoneNumber, ",", false);
+    vv = select s from test_set:s ACCUM
+    s.@node_cluster_id += s.neighborAttribute("to_call", "PhoneNumber", "cc_id");
+    print vv;
+}
+
+
+INSTALL QUERY check_phone
+INSTALL QUERY node_feat_sub_date_filter
+INSTALL QUERY pyG_pre
+INSTALL QUERY get_default_now
+INSTALL QUERY pyG_pre_ori
+INSTALL QUERY conn_comp_check
+#run query conn_comp("20190601", "20190602", "PhoneNumber")
+#run query pyG_pre("20190601","20190603","PhoneNumber")

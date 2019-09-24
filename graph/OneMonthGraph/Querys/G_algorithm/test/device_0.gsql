@@ -1,0 +1,12 @@
+use graph OneMonthNet
+CREATE OR REPLACE QUERY check_device() FOR GRAPH OneMonthNet
+{
+    init = {User.*};
+    save = select s from init:s -(user_to_device:e)->:t WHERE (s.temp_delete_bool == False and t.temp_delete_bool == False and s.outdegree("user_to_device")==0);
+    print save;
+}
+
+INSTALL QUERY check_device
+run query check_device()
+
+
