@@ -1,0 +1,6 @@
+1。 loss 正则；
+2。 NCE 改；
+3。 adj_list 想下能否不 resampling;
+4。  GCN AH 没用到；
+5。 负样本 不是真的 '负样本'；
+
