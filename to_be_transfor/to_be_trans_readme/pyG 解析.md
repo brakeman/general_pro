@@ -46,3 +46,63 @@
 一步到位把 sample and agg 通过scatter_add 系函数解决了，避免了引入额外东西；
 - 正过来想，给定target nodes [bs], edge_index, Embedding_lookup_table; 真的是一步到位， scatter_add解决了
 - 反过来，如果按照正常思路， 给定 target_nodes [bs], 首先需要采样邻居，采样完需要聚合，例如GCN 需要AH, 需要构建A, 等等等等。 
+
+怎么更新的？
+看下面代码
+- 一次GCN 把 x给更新了，换句话说，更新的是embedding_lookup_table. 当然合理
+- 另外，担心最大的内存开销是这个 tmp = torch.index_select(tmp, dim, edge_index[idx])
+担心它会生产出一个 num_edges * F 的爆炸矩阵；
+可是应该可以避免使用全部的边的，把num_edges 变成 num_batch_edges;
+完全可以；看两个例子，分别用了batch 和真个epoch;
+
+#### batch 级别；
+
+	batch_size= 512
+	train_loader = DataLoader(train_dataset, batch_size=batch_size)
+
+    def forward(self, data):
+        x, edge_index, batch = data.x, data.edge_index, data.batch
+
+
+	def train():
+	    model.train()
+
+	    loss_all = 0
+	    for data in train_loader:
+	        data = data.to(device)
+	        optimizer.zero_grad()
+	        output = model(data)
+
+	        label = data.y.to(device)
+	        loss = crit(output, label)
+	        loss.backward()
+	        loss_all += data.num_graphs * loss.item()
+	        optimizer.step()
+	    return loss_all / len(train_dataset)
+
+#### 整个epoch 级别
+
+	data = dataset[0].to(device) # 代表用了全部样本；
+
+	model.train()
+	for epoch in range(200):
+	    optimizer.zero_grad()
+	    out = model(data)
+	    loss = F.nll_loss(out[data.train_mask], data.y[data.train_mask])
+	    loss.backward()
+
+	class Net(torch.nn.Module):
+	    def __init__(self):
+	        super(Net, self).__init__()
+	        self.conv1 = GCNConv(dataset.num_node_features, 16)
+	        self.conv2 = GCNConv(16, dataset.num_classes)
+
+	    def forward(self, data):
+	        x, edge_index = data.x, data.edge_index
+
+	        x = self.conv1(x, edge_index)
+	        x = F.relu(x)
+	        x = F.dropout(x, training=self.training)
+	        x = self.conv2(x, edge_index)
+
+	        return F.log_softmax(x, dim=1)
