@@ -39,3 +39,10 @@
 1号位： 在target中对应第一个，即它邻居是emb_0
 2号位： 在target中对应第二行，第三行， 
 3号位： 。。。
+
+
+
+### pyG 的优势
+一步到位把 sample and agg 通过scatter_add 系函数解决了，避免了引入额外东西；
+- 正过来想，给定target nodes [bs], edge_index, Embedding_lookup_table; 真的是一步到位， scatter_add解决了
+- 反过来，如果按照正常思路， 给定 target_nodes [bs], 首先需要采样邻居，采样完需要聚合，例如GCN 需要AH, 需要构建A, 等等等等。 
