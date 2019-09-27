@@ -43,7 +43,7 @@
 
 
 ### pyG 的优势
-一步到位把 sample and agg 通过scatter_add 系函数解决了，避免了引入额外东西；
+一步到位把 sample and agg 通过scatter_add 系函数解决了，尤其是解决叠加多个layer 就可以[直接解决多度采样和聚合]的问题，太tm方便了，具体看下面代码，对一个batch 来说，它的edge_batch_index是永远不变的，每叠加一个GCNlayer,就更新x (emb_lookup_table)，当然是合理的。
 - 正过来想，给定target nodes [bs], edge_index, Embedding_lookup_table; 真的是一步到位， scatter_add解决了
 - 反过来，如果按照正常思路， 给定 target_nodes [bs], 首先需要采样邻居，采样完需要聚合，例如GCN 需要AH, 需要构建A, 等等等等。 
 
@@ -62,7 +62,6 @@
 
     def forward(self, data):
         x, edge_index, batch = data.x, data.edge_index, data.batch
-
 
 	def train():
 	    model.train()
