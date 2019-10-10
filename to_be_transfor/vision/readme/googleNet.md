@@ -32,3 +32,6 @@ By a carefully crafted design, we increased the depth and width of the network w
 - 模型结构图![googleNet_1](../pics/googleNet_1.png)
 - 四条并行通道，前三个不说了，都可以保证 H,W 不改变， 最后一个3*3 pooling, 一样的，也用padding same 的形式（只需要卷积核中心 卡住 feat_mat 左上角，开始 stride=1 开始滑动）
 - 要有relu 激活（门机制），保证不是所有的信号都激活；
+- 多个分支 ![googleNet_2](../pics/googleNet_2.png)
+- 只在高层使用inception 
+    -  it seemed beneficial to start us- ing Inception modules only at higher layers while keeping the lower layers in traditional convolutional fashion. This is not strictly necessary, simply reflecting some infrastructural inefficiencies in our current implementation.
