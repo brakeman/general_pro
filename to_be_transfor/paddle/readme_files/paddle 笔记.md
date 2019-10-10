@@ -1,5 +1,9 @@
 ## paddle 笔记
 
+- 理解数据传输流程
+    - reader --> rand_noise_reader(reader) --> batch_reader
+    -       batch_reader = paddle.batch(reader, 10)
+    - d
 
 - conv2d
 	- 输入和输出是NCHW格式
@@ -13,3 +17,6 @@
 - pool2d
 	- 默认参数 stride =1, padding=0
 	- ![conv_formul](../pics/pool2d.png)
+	
+	
+
