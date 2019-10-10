@@ -1,5 +1,12 @@
 from models.utils import load_image
+import random
 
+def train_valid_split(all_samples, train_rate = 0.8):
+    random.shuffle(all_samples)
+    split_point = int(len(all_samples)*train_rate)
+    train, valid = all_samples[:split_point], all_samples[split_point:]
+    return train, valid
+    
 def image_reader_creator(all_samples, n):
     def reader():
         error_count = 0 
