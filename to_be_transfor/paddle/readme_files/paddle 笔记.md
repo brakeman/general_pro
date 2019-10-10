@@ -1,9 +1,14 @@
 ## paddle 笔记
 
-- 理解数据传输流程
-    - reader --> rand_noise_reader(reader) --> batch_reader
-    -       batch_reader = paddle.batch(reader, 10)
-    - d
+- 经典例子
+<https://github.com/brakeman/general_pro/blob/master/to_be_transfor/paddle/models/run.ipynb>
+
+
+- AI studio 中 怎么启动 GUI?
+	- 复制 url
+	- 把 notebooks 之后的改为
+https://aistudio.baidu.com/bdvgpu/user/127073/136105/notebooks/136105.ipynb?redirects=1
+https://aistudio.baidu.com/bdvgpu/user/127073/136105/visualdl/static/index.html
 
 - conv2d
 	- 输入和输出是NCHW格式

@@ -19,7 +19,7 @@ def image_reader_creator(all_samples, n):
                 continue
             else:
                 yield img, y # a single entry of data is created each time
-        print('error:{}'.format(error_count))
+        # print('error:{}'.format(error_count))
     return reader
 
 
