@@ -22,3 +22,7 @@
 	- git commit -m 'temp wrong commit'
 	- git reset --mixed HEAD~1
 	- git add ...
+	
+###  git push 后 停止在12% writing objects 怎么回事？
+- 我用这个方法解决了
+- git config --global http.postBuffer 524288000
