@@ -1,8 +1,3 @@
-# 针对非时序表做特征工程，核心依赖 cat列之间的交互
-# v0 半自动，一组cat列交互之后 看lgb auc + top k features
-# v1 自动，给出全部cat列，有限资源下，按阶数做 lgb auc + top k features, 不需要再人工参与筛选了
-
-
 import pandas as pd
 import numpy as np
 import random
@@ -12,21 +7,18 @@ from functools import reduce
 
 class autofeat_draft:
     '''
-    1. k_order_comb generation 特征组合生成
-    2. dummy_lgb_topk 特征降维
-    3. auto_transform 小微特征加减乘 生成
+    1.  k_order_comb generation 特征组合生成
+    1.5. merge_box 组合特征后可以接一下merge_box
+    2.  dummy_lgb_topk 特征降维
+    3.  auto_transform 小微特征加减乘 生成
     '''
-    
     def __init__(self, global_id = 'id'):
         self.global_id = global_id
-        
     
     def k_order_comb(self, tra, val, column_names, order=2):
-        # 确认输入是否都是cat
         assert tra.index.name == self.global_id
         DF_tra, DF_val = pd.DataFrame(index=tra.index), pd.DataFrame(index=val.index)
         col_names_list = [i for i in itertools.combinations(column_names, order)]
-    #     print(col_names_list)
         for col_names in col_names_list:
             tra_cols = [tra[i] for i in col_names]
             val_cols = [val[i] for i in col_names]
@@ -53,7 +45,6 @@ class autofeat_draft:
             final_val.append(val_1)
         return pd.concat(final_tra, axis=1), pd.concat(final_val, axis=1)
     
-    
     def auto_transform(self, tra, val, column_names, order=2, op='add'):
         assert op in ['add', 'multiply', 'sub']
         assert tra.index.name == self.global_id == val.index.name
@@ -75,6 +66,24 @@ class autofeat_draft:
             else:
                 raise Exception('op error')
         return DF_tra, DF_val
+
+    def merge_box(self, tra, val, columns, thresh):
+        tra_df, val_df = pd.DataFrame(index=tra.index), pd.DataFrame(index=val.index)
+        for col in columns:
+            name = 'mb_'+col
+            tra_tmp, val_tmp = self._merge_box(tra, val, col, thresh)
+            tra_df[name], val_df[name] = tra_tmp, val_tmp
+        return tra_df, val_df
+    
+    def _merge_box(self, tra, val, column, thresh):
+        tra_df, val_df = tra[column].copy(), val[column].copy()
+        tmp = tra_df.value_counts(normalize=True).cumsum()
+        drop_cats = tmp[np.greater(tmp, thresh)].index.tolist()
+        if len(drop_cats)==len(tra[column].unique()):
+            drop_cats = tmp[np.greater(tmp, thresh)].index[1:]
+        tra_df[tra_df.isin(drop_cats)] = -888
+        val_df[val_df.isin(drop_cats)] = -888
+        return tra_df, val_df
     
     def _auto_topk(self, tra_x, tra_y, val_x, val_y):
         gbm = self._auc_impo(tra_x, tra_y, val_x, val_y)
@@ -152,8 +161,10 @@ class autofeat_draft:
     
 class PrePostProcess:
     '''  
-    1. 连续变量处理 排序分箱；
-    2. null 处理; 造两列空置率；     
+    1. rank_cut 排序分箱；
+    2. null 处理; 造两列空置率； 
+    3. to be done: 根据分布一致性删除列；
+    4. merge_box: 合箱子；
     '''   
     
     def _to_bins(self, col, q, labels=None):
@@ -182,6 +193,24 @@ class PrePostProcess:
             b1, _ = self._to_bins_trans(val[col_name], bins=bins1, labels=range(10))
             tmp_val[col_name+'_rankcut'] = b1
         return tmp_tra, tmp_val
+    
+    def _merge_box(self, tra, val, column, thresh):
+        tra_df, val_df = tra[column].copy(), val[column].copy()
+        tmp = tra_df.value_counts(normalize=True).cumsum()
+        drop_cats = tmp[np.greater(tmp, thresh)].index.tolist()
+        if len(drop_cats)==len(tra[column].unique()):
+            drop_cats = tmp[np.greater(tmp, thresh)].index[1:]
+        tra_df[tra_df.isin(drop_cats)] = -888
+        val_df[val_df.isin(drop_cats)] = -888
+        return tra_df, val_df
+
+    def merge_box(self, tra, val, columns, thresh):
+        tra_df, val_df = pd.DataFrame(index=tra.index), pd.DataFrame(index=val.index)
+        for col in columns:
+            name = 'mb_'+col
+            tra_tmp, val_tmp = self._merge_box(tra, val, col, thresh)
+            tra_df[name], val_df[name] = tra_tmp, val_tmp
+        return tra_df, val_df
 
         
 

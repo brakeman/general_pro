@@ -23,68 +23,28 @@
     
 ## finished
     - 分箱及其transform; 完成；
-    - _auto_combine (transfrom空置率控制) 完成；
+    - _auto_combine(transfrom空置率控制) 完成；
     - lgb_topk features; 半完成——no grid search;
     - PPP.py 半完成； 删除的操作都没做；
         -连续变量处理 排序分箱； 完成；
         -null 处理 数一下行空率； 完成；
         -列处理：相关性，方差，分布一致性 # 要删列的操作都先不做；
         -行处理：异常点  # 要删除行都操作都先不做；
-        - #更多的transform 类型 先等下把；
-            - DIFF
-            - DIV
-    - K阶trans； 完成
-    
     - HumanLook 完成；
         -看数字
             - 看列方差，列空置，列类别个数，列分布一致性
     - auto_transform 完成；
         自动做k阶 加减乘除特征组合；
-    - 
-    
+    - dummy_lgb_topk 完成；
+        自动降维；
+    - merge_box 完成；
+        自动合箱；
 
-## 今天to be done;
-    - 主函数框架
-    -     def main():
-        # 0. feature_dfs = [ori]
-        # 1. 1阶变形
-          --# 手工做1阶部分，是不可缺少的；
-          --# 0.1 rank形， diff/div
-          --# 0.2 相似形， diff/div 例如地址有4个
-            # 1. cont形，rank_cut
-          --# 1.1 超多类的列做 dummpy lgb topk
-          
-            # 2. concat cats
-            # 3. 对 cats 做null_ratio
-            # 4. lgb_topk
-            # 5. feature_dfs. append(new_cats)
-
-        # 2. 2阶变形
-            # 1. k_order_comb(order=2)
-            # 2. DIFF/DIV(order型) + null_ratio
-            # 3. lgb_topk
-            # 4. feature_dfs.append()
-            
-        # 3. 3阶变形
-            
-        # 4.concat all;
-        
-        # 5.根据分布一致性删除列；
-        
-    - transform 框架
-        - 找到 rank 类 并完成DIFF/DIV
-        
+## 今天to be done;  
     - #优先级低- 优化k_order_comb 效率
-
-    - 权衡 dummy lgb topk & multi variables dummy lgb topk 
-        - 第一个版本 不如就 累加至 10000个 dummy 类就跑一次lgb ?
-
-    - 类别列转换；
-        - dummy 1-hot - lgb top_k
-        
-    - auto_feat 缺陷当然是过拟合，所以必须要看分布一致性；
-        
-    - 手工1阶特征，以便你有决心去做2阶
+    - 手工1阶特征 提交一下看看
+    - PPP 分布一致性功能
+    
 # handcraft pipeline
     # id 类 certId, dist, bankCard,
     # 时间类  certValidBegin, certValidStop，weekday，setupHour

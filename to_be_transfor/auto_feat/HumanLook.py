@@ -26,6 +26,7 @@ def _col_null(df, null_val):
 def _trend_consistency(Train, Valid, target_col='target'):
     return get_trend_stats(data=Train, target_col=target_col, data_test=Valid)
 
+
 def show_all(Train, Valid, target_col, null_val):
     res = {}
     res['null'] = _col_null(Train, null_val)
