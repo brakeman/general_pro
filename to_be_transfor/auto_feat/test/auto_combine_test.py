@@ -1,8 +1,11 @@
+# 优化空间： 算3阶的时候，重复计算了2阶;
+
+
 import pandas as pd
 import numpy as np
 
 
-def _auto_combine(cols, col_names, max_limit = 10000, null_rate=0.66, fill='null', test_transform=False):
+def _auto_combine(cols, col_names, max_limit = 10000, null_rate=0.66, test_transform=False):
     # 多种类别形 直接 字符串相加 变成新列;
     # cols: List[series]
     # col_names: List[str]
@@ -14,21 +17,22 @@ def _auto_combine(cols, col_names, max_limit = 10000, null_rate=0.66, fill='null
         name += col_names[i]+'|'
         val += col_names[i]+'='+cols[i].astype('str')+'|'
         unique_cat = len(val.value_counts())
-        print('generated new column:{}\n.................with unique category length:{}\n'.format(name, unique_cat))
+
     new_col = pd.Series(val, name=name)
     if test_transform:
         return new_col
 
     tmp = new_col.value_counts(normalize=True).cumsum()
     unique_cats = tmp[np.less(tmp, null_rate)].index.tolist()
-    new_col[~new_col.isin(unique_cats)] = fill
+    new_col[~new_col.isin(unique_cats)] = np.nan
+    print('generated new column:{}\n.................with unique category length:{}\n'.format(name, unique_cat))
     print('after null ratio control, there are totally {} categories left'.format(new_col.value_counts().shape[0]))
     return new_col, unique_cats
 
 
-def _auto_combine_transform(test_cols, unique_cats, col_names, fill):
+def _auto_combine_transform(test_cols, unique_cats, col_names):
     test_new_cols = _auto_combine(test_cols, col_names, test_transform=True)
-    test_new_cols[~test_new_cols.isin(unique_cats)] = fill
+    test_new_cols[~test_new_cols.isin(unique_cats)] = np.nan
     print('after null ratio control, there are totally {} categories left'.format(test_new_cols.value_counts().shape[0]))
     return test_new_cols
 

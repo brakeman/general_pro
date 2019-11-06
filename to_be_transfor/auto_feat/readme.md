@@ -14,8 +14,13 @@
         |----       k_order_comb_test.py
         |----       auto_topk_test.py
         
+## 通用衍生核心：
+    - 类别变量的组合 --> dummy lgb topk --> 小微类别变量
+    - 小微类别变量的组合（加 减 乘 除）
+
 ## 除了本项目主要的通用特征衍生，还有业务逻辑特征
     - 1。 多个地址列，可能其中一列是 621785 这种身份证前6位地址，也可能是用户自己填的，可以衍生一个DIFF(dist1, dist2)用来判断用户是否虚报地址；
+    
 ## finished
     - 分箱及其transform; 完成；
     - _auto_combine (transfrom空置率控制) 完成；
@@ -33,16 +38,22 @@
     - HumanLook 完成；
         -看数字
             - 看列方差，列空置，列类别个数，列分布一致性
+    - auto_transform 完成；
+        自动做k阶 加减乘除特征组合；
+    - 
     
+
 ## 今天to be done;
     - 主函数框架
     -     def main():
         # 0. feature_dfs = [ori]
         # 1. 1阶变形
+          --# 手工做1阶部分，是不可缺少的；
           --# 0.1 rank形， diff/div
           --# 0.2 相似形， diff/div 例如地址有4个
             # 1. cont形，rank_cut
           --# 1.1 超多类的列做 dummpy lgb topk
+          
             # 2. concat cats
             # 3. 对 cats 做null_ratio
             # 4. lgb_topk
@@ -63,8 +74,32 @@
     - transform 框架
         - 找到 rank 类 并完成DIFF/DIV
         
+    - #优先级低- 优化k_order_comb 效率
+
+    - 权衡 dummy lgb topk & multi variables dummy lgb topk 
+        - 第一个版本 不如就 累加至 10000个 dummy 类就跑一次lgb ?
+
     - 类别列转换；
         - dummy 1-hot - lgb top_k
+        
+    - auto_feat 缺陷当然是过拟合，所以必须要看分布一致性；
+        
+    - 手工1阶特征，以便你有决心去做2阶
+# handcraft pipeline
+    # id 类 certId, dist, bankCard,
+    # 时间类  certValidBegin, certValidStop，weekday，setupHour
+        - 分箱子
+        - 是否周末 weekday
+        - 是否白天
+    
+    # rank类 age, lmt 
+        - 严格分箱，弃旧不用；
+        
+    # 相似类 
+        - certId, dist, residentAddr
+        - certValidStop, certValidBegin
+        - highestEdu, edu
+        # DIFF, DIV, SUM, MULTIPLY
     
 
 ## to be done:
