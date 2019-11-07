@@ -26,3 +26,10 @@
 ###  git push 后 停止在12% writing objects 怎么回事？
 - 我用这个方法解决了
 - git config --global http.postBuffer 524288000
+
+
+### 另一个电脑上把本地代码与仓库同步
+    - git remote add upstream <github repo url>
+    - git remote -v
+    - git fetch upstream
+    - git merge upstream/master
