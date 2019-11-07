@@ -14,11 +14,11 @@
         |----       k_order_comb_test.py
         |----       auto_topk_test.py
         
-## 通用衍生核心：
+## 通用衍生核心:
     - 类别变量的组合 --> dummy lgb topk --> 小微类别变量
     - 小微类别变量的组合（加 减 乘 除）
 
-## 除了本项目主要的通用特征衍生，还有业务逻辑特征
+## 除了本项目主要的通用特征衍生，还有业务逻辑特征:
     - 1。 多个地址列，可能其中一列是 621785 这种身份证前6位地址，也可能是用户自己填的，可以衍生一个DIFF(dist1, dist2)用来判断用户是否虚报地址；
     
 ## finished
@@ -39,11 +39,19 @@
         自动降维；
     - merge_box 完成；
         自动合箱；
+    - 手工1阶特征 提交一下看看 完成
 
 ## 今天to be done;  
+    - 一个是feat importance 的参数选择，双选！ 完成
+    - 一个是dummy_top_k 的收集方式，是滚动式为好，改！ 完成
+    - bug: 某种情况下会使得两个train ,test cols 不一致；
+            - dummy！ train col 中有，比如 123 这个数， 但是test中没有；
+            - 只需要 tra_x[val_x.columns]
+            train:(70000, 15245)   valid:(62029, 13915)
+    
     - #优先级低- 优化k_order_comb 效率
-    - 手工1阶特征 提交一下看看
-    - PPP 分布一致性功能
+    - 动态权衡 合箱&dummy_lgb;
+    - PPP 一致性功能
     
 # handcraft pipeline
     # id 类 certId, dist, bankCard,

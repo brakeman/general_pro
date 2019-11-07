@@ -15,7 +15,7 @@ def _merge_box(tra, val, column, thresh):
 def merge_box(tra, val, columns, thresh):
     tra_df, val_df = pd.DataFrame(index=tra.index), pd.DataFrame(index=val.index)
     for col in columns:
-        name = 'mb_'+col
+        name = 'mb('+col+')'
         tra_tmp, val_tmp = _merge_box(tra, val, col, thresh)
         tra_df[name], val_df[name] = tra_tmp, val_tmp
     return tra_df, val_df
@@ -34,6 +34,7 @@ if __name__ == '__main__':
     val_id = [i for i in val_id]
     Train = final.iloc[tra_id,:]
     Valid = final.iloc[val_id,:]
-    tra_x, tra_y = Train.drop('target', axis=1), Train.target
-    val_x, val_y = Valid.drop('target', axis=1), Valid.target
+    tra_x, tra_y = Train.drop('target', axis=1).set_index(keys='id'), Train[['id','target']].set_index(keys='id')
+    val_x, val_y = Valid.drop('target', axis=1).set_index(keys='id'), Valid[['id','target']].set_index(keys='id')
+
     tra_df, val_df =  merge_box(tra_x, val_x, columns=mid_cats, thresh=0.92)

@@ -21,7 +21,7 @@ def auc_impo(tra_x, tra_y, val_x, val_y, params=None):
     gbm = lgb.train(params,                     # 参数字典
                     cv_train,                  # 训练集
                     num_boost_round=2000,       # 迭代次数
-                    valid_sets=cv_train,        # 验证集
+                    valid_sets=cv_valid,        # 验证集
                     early_stopping_rounds = 100,
                     verbose_eval=0)
     print('with best auc:{}'.format(gbm.best_score['training']['auc']))
