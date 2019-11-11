@@ -1,5 +1,20 @@
-## git 使用
+## git 使用&linux
 
+
+### max + lgb 老的解决办法
+    # brew install cmake
+    # brew install libomp
+    # brew install gcc@7 --without-multilib
+    # pip3 install --no-binary :all: lightgbm
+
+
+### 虚拟环境创建好，启动notebook, 可是发现无法import 安装好的包
+    - sys.path 看下虚拟环境是否在系统环境路径里
+    - 如果不在那就 sys.path.append('/Users/bruce/Desktop/qb_env_1/lib/python3.6/site-packages')
+    - !pip list 看下是否安装过；
+    - 可是我的问题是 ipython 默认的python 解释器不是我虚拟环境的解释器；我需要在虚拟环境里安装ipython/jupyter
+
+    
 ### 
 
 - git add : 把文件添加到暂存区
@@ -29,7 +44,7 @@
 
 
 ### 另一个电脑上把本地代码与仓库同步
-    - git remote add upstream <github repo url>
-    - git remote -v
-    - git fetch upstream
-    - git merge upstream/master
+    - git remote -v # 查看远程仓库
+    - git fetch origin master:temp # 在本地新建一个temp分支，并将远程origin仓库的master分支代码下载到本地temp分支
+    - git merge temp # 把temp 合并到 本地master分支
+    - git branch -d temp # 删除该分支
