@@ -42,6 +42,8 @@
     - 手工1阶特征 提交一下看看 完成
 
 ## 今天to be done;
+    - woe , target-enco [zhihu](https://zhuanlan.zhihu.com/p/91098922)
+
     - 重构代码
     - 采样增加随机性 
     - 阅读文章  
