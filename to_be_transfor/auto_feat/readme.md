@@ -40,9 +40,12 @@
     - merge_box 完成；
         自动合箱；
     - 手工1阶特征 提交一下看看 完成
-
+    - chimerge_woe 完成
 ## 今天to be done;
     - woe , target-enco [zhihu](https://zhuanlan.zhihu.com/p/91098922)
+    - 知道怎么做pipeline 吗？ ![22](https://github.com/scikit-learn-contrib/categorical-encoding)
+        - TargetEncoder(cols=['CHAS', 'RAD']).fit(X_train, y_train)
+        - 把 cols 放在init 里；
 
     - 重构代码
     - 采样增加随机性 
