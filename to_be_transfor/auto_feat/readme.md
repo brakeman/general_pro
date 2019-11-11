@@ -41,16 +41,16 @@
         自动合箱；
     - 手工1阶特征 提交一下看看 完成
 
-## 今天to be done;  
+## 今天to be done;
+    - 重构代码
+    - 采样增加随机性 
+    - 阅读文章  
     - 一个是feat importance 的参数选择，双选！ 完成
     - 一个是dummy_top_k 的收集方式，是滚动式为好，改！ 完成
     - bug: 某种情况下会使得两个train ,test cols 不一致；
             - dummy！ train col 中有，比如 123 这个数， 但是test中没有；
             - 只需要 tra_x[val_x.columns]
             train:(70000, 15245)   valid:(62029, 13915)
-    
-    - #优先级低- 优化k_order_comb 效率
-    - 动态权衡 合箱&dummy_lgb;
     - PPP 一致性功能
     
 # handcraft pipeline

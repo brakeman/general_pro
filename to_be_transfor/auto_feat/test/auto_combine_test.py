@@ -1,44 +1,39 @@
-# 优化空间： 算3阶的时候，重复计算了2阶;
-
-
 import pandas as pd
 import numpy as np
+import random
+import sys
+sys.path.append('../../')
+from utils import _merge_box
 
 
-def _auto_combine(cols, col_names, max_limit = 10000, null_rate=0.66, test_transform=False):
-    # 多种类别形 直接 字符串相加 变成新列;
-    # cols: List[series]
-    # col_names: List[str]
-    # return: pd.Series with name;
-    name, val, unique_cat = '', '', 0
-    for i in range(len(col_names)):
-        if unique_cat > max_limit and not test_transform:
-            break            
-        name += col_names[i]+'|'
-        val += col_names[i]+'='+cols[i].astype('str')+'|'
-        unique_cat = len(val.value_counts())
-
-    new_col = pd.Series(val, name=name)
-    if test_transform:
-        return new_col
-
-    tmp = new_col.value_counts(normalize=True).cumsum()
-    unique_cats = tmp[np.less(tmp, null_rate)].index.tolist()
-    new_col[~new_col.isin(unique_cats)] = np.nan
-    print('generated new column:{}\n.................with unique category length:{}\n'.format(name, unique_cat))
-    print('after null ratio control, there are totally {} categories left'.format(new_col.value_counts().shape[0]))
-    return new_col, unique_cats
-
-
-def _auto_combine_transform(test_cols, unique_cats, col_names):
-    test_new_cols = _auto_combine(test_cols, col_names, test_transform=True)
-    test_new_cols[~test_new_cols.isin(unique_cats)] = np.nan
-    print('after null ratio control, there are totally {} categories left'.format(test_new_cols.value_counts().shape[0]))
-    return test_new_cols
+def auto_combine(tra, val, col_names, merge_tail, thresh):
+    '''
+    多种类别形 直接 字符串相加 变成新列;
+    -----------------------------------------
+    tra: train_df;
+    val: valid_df;
+    col_names: list(str);
+    merge_tail: bool; 是否合并每列尾部的微小类别；
+    thresh: float; 如果merge_tail, 则需要给出阈值；
+    -----------------------------------------
+    return:
+        tra: pd.Series;
+        val: pd.Series;
+    '''
+    tra_tmp, val_tmp = pd.DataFrame(index=tra.index), pd.DataFrame(index=val.index)
+    new_name = 'comb('+','.join(col_names)+')'
+    tra_tmp[new_name] = (tra[col_names].astype(str)+'|').sum(axis=1)
+    val_tmp[new_name] = (val[col_names].astype(str)+'|').sum(axis=1)
+    if merge_tail:
+        return _merge_box(tra_tmp, val_tmp, new_name, thresh)
+    else:
+        drop_tes = list(set(val_tmp[new_name].unique()) - set(tra_tmp[new_name].unique()))
+        val_tmp[new_name][val_tmp[new_name].isin(drop_tes)] = -888        
+        return tra_tmp[new_name], val_tmp[new_name]
 
 
 if __name__ == '__main__':
-    data_path = '/home/chenxiaotian/Projects/xiamen_match/data'
+    data_path = './data/'
     # test.csv  train.csv  train_target.csv
     tra_x = pd.read_csv(data_path + '/train.csv')
     tra_y = pd.read_csv(data_path + '/train_target.csv')
@@ -54,9 +49,5 @@ if __name__ == '__main__':
     tra_x, tra_y = Train.drop('target', axis=1), Train.target
     val_x, val_y = Valid.drop('target', axis=1), Valid.target
     
-    tes_col = ['gender', 'edu', 'job', 'dist']
-    col_names = tes_col
-    cols = [tra_x[i] for i in col_names]
-    test_cols = [val_x[i] for i in col_names]
-    train_col, uniq = _auto_combine(cols, col_names)
-    test_new = _auto_combine_transform(test_cols, uniq, col_names, fill='null')
+    tes_col = ['gender', 'edu', 'job']
+    a, b = auto_combine(tra_x, val_x, col_names=tes_col, merge_tail=True, thresh=0.95)

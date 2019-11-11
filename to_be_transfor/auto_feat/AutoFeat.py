@@ -4,6 +4,11 @@ import random
 import itertools
 import lightgbm as lgb
 from functools import reduce
+from utils import merge_box
+import sys
+sys.path.append('../')
+from utils import _merge_box, k_order_comb
+import itertools
 
 class autofeat_draft:
     '''
@@ -15,24 +20,17 @@ class autofeat_draft:
     def __init__(self, global_id = 'id'):
         self.global_id = global_id
     
-    def k_order_comb(self, tra, val, column_names, order):
+    def k_order_comb(self, tra, val, column_names, order, merge_tail, thresh):
         assert tra.index.name == self.global_id
-        DF_tra, DF_val = pd.DataFrame(index=tra.index), pd.DataFrame(index=val.index)
-        col_names_list = [i for i in itertools.combinations(column_names, order)]
-        for col_names in col_names_list:
-            tra_cols = [tra[i] for i in col_names]
-            val_cols = [val[i] for i in col_names]
-            tra_new, uniq = self._auto_combine(tra_cols, col_names)
-            val_new = self._auto_combine_transform(val_cols, uniq, col_names)
-            DF_tra[tra_new.name] = tra_new
-            DF_val[tra_new.name] = val_new
-        print('after {} order feature combination, there are totally {} new features generated'.format(order, DF_tra.shape[1]))
-        return DF_tra, DF_val
+        return k_order_comb(tra, val, column_names, order, merge_tail, thresh)
+    
+    def merge_box(self, tra, val, columns, thresh):
+        return merge_box(tra, val, columns, thresh)
+    
     
     def dummy_lgb_topk(self, tra_x, tra_y, val_x, val_y, col_names_list, max_unique, top_k):
         # 每囤够max_unique个dummy 就跑一次 lgb top k 
-        tmp_tra_df = pd.DataFrame(index = tra_x.index)
-        tmp_val_df = pd.DataFrame(index = val_x.index)
+        tmp_tra_df, tmp_val_df = pd.DataFrame(index = tra_x.index), pd.DataFrame(index = val_x.index)
         final_tra, final_val, unique_num = [], [], 0
         for idx, col in enumerate(col_names_list):
             print('dummy column: {}/{}'.format(idx, len(col_names_list)))
@@ -78,23 +76,6 @@ class autofeat_draft:
                 raise Exception('op error')
         return DF_tra, DF_val
 
-    def merge_box(self, tra, val, columns, thresh):
-        tra_df, val_df = pd.DataFrame(index=tra.index), pd.DataFrame(index=val.index)
-        for col in columns:
-            name = 'mb('+col+')'
-            tra_tmp, val_tmp = self._merge_box(tra, val, col, thresh)
-            tra_df[name], val_df[name] = tra_tmp, val_tmp
-        return tra_df, val_df
-    
-    def _merge_box(self, tra, val, column, thresh):
-        tra_df, val_df = tra[column].copy(), val[column].copy()
-        tmp = tra_df.value_counts(normalize=True).cumsum()
-        drop_cats = tmp[np.greater(tmp, thresh)].index.tolist()
-        if len(drop_cats)==len(tra[column].unique()):
-            drop_cats = tmp[np.greater(tmp, thresh)].index[1:]
-        tra_df[tra_df.isin(drop_cats)] = -888
-        val_df[val_df.isin(drop_cats)] = -888
-        return tra_df, val_df
     
     def _auto_topk(self, tra_x, tra_y, val_x, val_y, top_k):
         gbm = self._auc_impo(tra_x, tra_y, val_x, val_y)
@@ -140,38 +121,6 @@ class autofeat_draft:
         return val_x[col_names]
 
 
-    def _auto_combine(self, cols, col_names, max_limit = 10000, null_rate=0.66, test_transform=False):
-        # 多种类别形 直接 字符串相加 变成新列;
-        # cols: List[series]
-        # col_names: List[str]
-        # return: pd.Series with name;
-        name, val, unique_cat = '', '', 0
-        for i in range(len(col_names)):
-            if unique_cat > max_limit and not test_transform:
-                break            
-            name += col_names[i]+'|'
-#             print(col_names[i])
-            val += col_names[i]+'='+ cols[i].astype('str')+'|'
-            unique_cat = len(val.value_counts())
-
-        new_col = pd.Series(val, name=name)
-        if test_transform:
-            return new_col
-
-        tmp = new_col.value_counts(normalize=True).cumsum()
-        unique_cats = tmp[np.less(tmp, null_rate)].index.tolist()
-        new_col[~new_col.isin(unique_cats)] = -999
-#         print('generated new column:{}\n.................with unique category length:{}\n'.format(name, unique_cat))
-#         print('after null ratio control, there are totally {} categories left'.format(new_col.value_counts().shape[0]))
-        return new_col, unique_cats
-
-
-    def _auto_combine_transform(self, test_cols, unique_cats, col_names):
-        test_new_cols = self._auto_combine(test_cols, col_names, test_transform=True)
-        test_new_cols[~test_new_cols.isin(unique_cats)] = -999
-#         print('after null ratio control, there are totally {} categories left'.format(test_new_cols.value_counts().shape[0]))
-        return test_new_cols
-
     
 class PrePostProcess:
     '''  
@@ -216,23 +165,9 @@ class PrePostProcess:
             tmp_val[col_name+'_rankcut'] = b1
         return tmp_tra, tmp_val
     
-    def _merge_box(self, tra, val, column, thresh):
-        tra_df, val_df = tra[column].copy(), val[column].copy()
-        tmp = tra_df.value_counts(normalize=True).cumsum()
-        drop_cats = tmp[np.greater(tmp, thresh)].index.tolist()
-        if len(drop_cats)==len(tra[column].unique()):
-            drop_cats = tmp[np.greater(tmp, thresh)].index[1:]
-        tra_df[tra_df.isin(drop_cats)] = -888
-        val_df[val_df.isin(drop_cats)] = -888
-        return tra_df, val_df
 
     def merge_box(self, tra, val, columns, thresh):
-        tra_df, val_df = pd.DataFrame(index=tra.index), pd.DataFrame(index=val.index)
-        for col in columns:
-            name = 'mb('+col+')'
-            tra_tmp, val_tmp = self._merge_box(tra, val, col, thresh)
-            tra_df[name], val_df[name] = tra_tmp, val_tmp
-        return tra_df, val_df
+        return merge_box(tra, val, columns, thresh)
 
     def auto_transform(self, tra, val, column_names, order=2, op='add'):
         # 确认输入是否都是cat
@@ -256,5 +191,3 @@ class PrePostProcess:
             else:
                 raise Exception('op error')
         return DF_tra, DF_val
-
-
