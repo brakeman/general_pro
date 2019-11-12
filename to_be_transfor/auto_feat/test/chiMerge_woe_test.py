@@ -103,62 +103,58 @@ class ChiMerge(BaseEstimator, TransformerMixin):
                     #类数目
                     cls_num = freq.shape[-1]
                     threshold = chi2.isf(0.05, df= cls_num - 1)
-    
-    while True:
-        minvalue = None
-            minidx = None
+
+            while True:
+                minvalue = None
+                minidx = None
                 #从第1组开始，依次取两组计算卡方值，并判断是否小于当前最小的卡方
                 for i in range(len(freq) - 1):
                     v = self._chi_value(freq[i:i+2])
                     if minvalue is None or (minvalue > v): #小于当前最小卡方，更新最小值
                         minvalue = v
                         minidx = i
-            #如果最小卡方值小于阈值，则合并最小卡方值的相邻两组，并继续循环
-            if  (self.max_groups is not None and self.max_groups< len(freq)) or (self.threshold is not None and minvalue < self.threshold):
-                #minidx后一行合并到minidx
-                tmp  = freq[minidx] + freq[minidx+1]
-                freq[minidx] = tmp
-                #删除minidx后一行
-                freq = np.delete(freq,minidx+1,0)
+
+                #如果最小卡方值小于阈值，则合并最小卡方值的相邻两组，并继续循环
+                if (self.max_groups is not None and self.max_groups< len(freq)) or (self.threshold is not None and minvalue < self.threshold):
+                    #minidx后一行合并到minidx
+                    tmp  = freq[minidx] + freq[minidx+1]
+                    freq[minidx] = tmp
+                    #删除minidx后一行
+                    freq = np.delete(freq,minidx+1,0)
                     #删除对应的切分点
                     cutoffs = np.delete(cutoffs,minidx+1,0)
                 else: #最小卡方值不小于阈值，停止合并。
                     break
-    if null_flag:
-        cutoffs = np.append(cutoffs, [self.null_value])
+            if null_flag:
+                cutoffs = np.append(cutoffs, [self.null_value])
             dic[col]=cutoffs
-    self.cols_dic = dic
+        self.cols_dic = dic
         return self
 
-def _value2group(self, x, cutoffs):
-    
-    '''
+    def _value2group(self, x, cutoffs):
+        '''
         将变量的值转换成相应的组。
         x: 需要转换到分组的值
         cutoffs: 各组的起始值。
         return: x对应的组，如group1。从group1开始。
         '''
-            
-            #切分点从小到大排序。
-            cutoffs = sorted(cutoffs)
-            num_groups = len(cutoffs)
-            
-            #异常情况：小于第一组的起始值。这里直接放到第一组。
-            #异常值建议在分组之前先处理妥善。
-            if x <= cutoffs[0]:
-                return cutoffs[0]
-                    
-                    for i in range(1,num_groups):
-                        if cutoffs[i-1] <= x < cutoffs[i]:
-                            return '['+','.join([str(cutoffs[i-1]), str(cutoffs[i])])+')'
-                                
-                                #最后一组，也可能会包括一些非常大的异常值。
-                                return '['+str(cutoffs[-1])+',_)'
+        #切分点从小到大排序。
+        cutoffs = sorted(cutoffs)
+        num_groups = len(cutoffs)
+        #异常情况：小于第一组的起始值。这里直接放到第一组。
+        #异常值建议在分组之前先处理妥善。
+        if x <= cutoffs[0]:
+            return cutoffs[0]
+        for i in range(1,num_groups):
+            if cutoffs[i-1] <= x < cutoffs[i]:
+                return '['+','.join([str(cutoffs[i-1]), str(cutoffs[i])])+')'
+        #最后一组，也可能会包括一些非常大的异常值。
+        return '['+str(cutoffs[-1])+',_)'
 
-def transform(self, X, y=None):
-    df = pd.DataFrame()
-    for col, cutoffs in self.cols_dic.items():
-        df[col] = X[col].apply(self._value2group,args=(cutoffs,))
+    def transform(self, X, y=None):
+        df = pd.DataFrame()
+        for col, cutoffs in self.cols_dic.items():
+            df[col] = X[col].apply(self._value2group,args=(cutoffs,))
         return df
 
 
