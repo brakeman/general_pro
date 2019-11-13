@@ -48,3 +48,6 @@
     - git fetch origin master:temp # 在本地新建一个temp分支，并将远程origin仓库的master分支代码下载到本地temp分支
     - git merge temp # 把temp 合并到 本地master分支
     - git branch -d temp # 删除该分支
+
+### git merge 出现矛盾怎么办？
+    - git reset --hard # 如果发现矛盾可以把工作区和暂存区全部回滚到上一个版本，而后再merge就可以了
