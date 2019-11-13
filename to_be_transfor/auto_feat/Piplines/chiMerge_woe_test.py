@@ -3,41 +3,51 @@ from sklearn.base import BaseEstimator, TransformerMixin
 import pandas as pd
 import numpy as np
 import random
-
-# https://blog.csdn.net/weixin_32549789/article/details/84937921
-def cat2bad_rate(df, col='edu', target='target', null_value=-999):
-    ct_df = pd.crosstab(df[col], df['target'])
-    new_dic = {k:v for v,k in (ct_df[1]/ct_df.sum(axis=1)).sort_values().reset_index()[[col]].to_dict()[col].items()}
-    new_dic[null_value] = null_value
-    return Train[col].map(new_dic)
+import ipdb
 
 
 class WOE_enc(BaseEstimator, TransformerMixin):
-    def __init__(self, cols): # no *args and **kwargs
+    '''
+    0.03-0.09	低
+    0.1-0.29	中
+    0.3-0.49	高
+    '''
+    def __init__(self, cols, null_value, iv_min=0.05, iv_max=0.5, verbose=1): # no *args and **kwargs
         super().__init__()
         self.cols = cols
         self.cols_info = {}
+        self.null_value = null_value
+        self.iv_min = iv_min
+        self.iv_max = iv_max
+        self.verbose =verbose
     
     def fit(self, df, y):
         woe_dics = {}
+        if self.cols is None:
+            self.cols = df.columns
         for col in self.cols:
-            woe_dics[col]={}
             woe, iv = self._calWOE(df, col, y)
-            woe_dics[col]['woe'] = woe
-            woe_dics[col]['iv'] = iv
+            if (iv<self.iv_max) and (iv>self.iv_min):
+                woe_dics[col]={}
+                woe_dics[col]['woe'] = woe
+                woe_dics[col]['iv'] = iv
         self.woe_dics = woe_dics
+        print('save totally {}/{} columns with iv in [{}, {}]'.format(len(woe_dics), len(self.cols), 
+                                                                      self.iv_min, self.iv_max))
+        if self.verbose==1:
+            print(self.iv_report)
         return self
     
     def transform(self, x):
         df = pd.DataFrame()
-        for col in self.cols:
-            if col not in self.woe_dics:
-                raise Exception('col:{} not in woe_dics'.format(col))
+        for col in self.woe_dics:
             df[col] = x[col].map(self.woe_dics[col]['woe'])
-        return df
+        return df.fillna(self.null_value)
     
+    @property
     def iv_report(self):
         z = pd.DataFrame()
+#         ipdb.set_trace()
         z['var']=self.woe_dics.keys()
         z['iv']= [self.woe_dics[i]['iv'] for i in self.woe_dics]
         return z

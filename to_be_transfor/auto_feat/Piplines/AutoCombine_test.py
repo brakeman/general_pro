@@ -5,51 +5,96 @@ import random
 import time
 import itertools
 from functools import wraps
-
-def timer(function):
-    @wraps(function)
-    def function_timer(*args, **kwargs):
-        t0 = time.time()
-        result = function(*args, **kwargs)
-        t1 = time.time()
-        print ("Total time running function: %s with %s seconds" %
-            (function.__name__, str(t1-t0)))
-        return result
-    return function_timer
+from multiprocessing import Pool
+# import ipdb
 
 class AutoCombine(BaseEstimator, TransformerMixin):
-    def __init__(self, cols, order, null_value):
+    '''多进程k阶类别特征组合'''
+    def __init__(self, cols, order, null_value, num_process, verbose, max_comb=4000):
         super().__init__()
         self.cols = cols
         self.order = order
         self.col_dicts = {}
-        self.cache = None
         self.null_value = null_value
         self.combine_list = [i for i in itertools.combinations(cols, order)]
+        self.verbose=verbose
+        if len(self.combine_list)>max_comb:
+            print('clip since reach max_comb:{}/{}'.format(len(self.combine_list), max_comb))
+            self.combine_list = random.sample(self.combine_list, max_comb)
+        else:
+            print('totally {} combinations'.format(len(self.combine_list)))
+        self.num_process=num_process
+        if num_process!=None:
+            self.sub_len = len(self.combine_list)//num_process+1
+            self.sub_comb_list = [self.combine_list[x:x+self.sub_len] for x in range(0, len(self.combine_list), self.sub_len)]
 
-    @timer
-    def fit(self, x, y=None):
+        
+    def _fit(self, x, combine_list):
         DF = pd.DataFrame()
-        for idx, col_names in enumerate(self.combine_list):
+        col_dicts={}
+        for idx, col_names in enumerate(combine_list):
             new_name = 'comb('+','.join(col_names)+')'
-            print('processing col: {}, {}/{}'.format(new_name, idx, len(self.combine_list)))
+            length=len(combine_list)
+            if idx%(length//2)==0 and self.verbose==1:
+                print('processing col: {}, {}/{}'.format(new_name, idx, length))
             DF[new_name] = (x[list(col_names)].astype(str)+'|').sum(axis=1)
-            self.col_dicts[new_name] =  DF[new_name].unique()
-        self.cache = DF
-        return self   
+            col_dicts[new_name] =  DF[new_name].unique()
+        return DF, col_dicts
     
-    @timer
-    def transform(self, x, train):
-        if train:
-            return self.cache
+    def fit(self, x, y=None):
+        if self.num_process:
+            print('------------------------{}-{}----------------------------'.format(self.__class__.__name__, 'fit()'))
+            print('program is going to use multiprocessing with {} Ps'.format(self.num_process))
+            p = Pool(self.num_process)
+            rst = []
+            for i in range(self.num_process): 
+                if i>len(self.sub_comb_list)-1: # 防止workers>len(sub_comb_list)报错
+                    print('num_works should be at most: {}'.format(self.sub_len))
+                a = p.apply_async(self._fit, args=(x, self.sub_comb_list[i])) 
+                rst.append(a)       
+            p.close()
+            p.join()
+            new_x=rst[0].get()[0]
+            for i in rst[1:]:
+                new_x=new_x.join(i.get()[0])
+            list_dic = [i.get()[1] for i in rst]
+            for d in list_dic:
+                self.col_dicts.update(d)
+        else:
+            new_x =  self._fit(x, self.combine_list)
+        return self
+        
+    def _transform(self, x, combine_list):
         DF = pd.DataFrame()
-        for col_names in self.combine_list:
+        for idx, col_names in enumerate(combine_list):
             new_name = 'comb('+','.join(col_names)+')'
+            length = len(combine_list)
+            if idx%(length//2)==0 and self.verbose==1:
+                print('processing col: {}, {}/{}'.format(new_name, idx, length))
             tra_unique = self.col_dicts[new_name]
             DF[new_name] = (x[list(col_names)].astype(str)+'|').sum(axis=1)
             # 凡是 test中存在， train中不存在的，变为null
             DF[new_name][~DF[new_name].isin(tra_unique)] = self.null_value
         return DF
+    
+    def transform(self, x):
+        if self.num_process:
+            print('------------------------{}-{}----------------------------'.format(self.__class__.__name__, 'transform()'))
+            print('program is going to use multiprocessing with {} Ps'.format(self.num_process))
+            p2 = Pool(self.num_process)
+            rst = []
+            for i in range(self.num_process):
+                if i>len(self.sub_comb_list)-1:
+                    print('num_works should be at most: {}'.format(self.sub_len))
+                aa = p2.apply_async(self._transform, args=(x, self.sub_comb_list[i])) 
+                rst.append(aa)       
+            p2.close()
+            p2.join()
+            new_x = pd.concat([i.get() for i in rst], axis=1)
+            return new_x
+        else:
+            print('will not use multi processing')
+            return self._transform(x)
     
     
 if __name__ == '__main__':
@@ -68,7 +113,11 @@ if __name__ == '__main__':
     Valid = final.iloc[val_id,:]
     tra_x, tra_y = Train.drop('target', axis=1), Train.target
     val_x, val_y = Valid.drop('target', axis=1), Valid.target
-    tbr = AutoCombine(cols=['edu', 'age', 'gender'], order=2, null_value=-999)
-    tbr.fit(tra_x)
-    z = tbr.transform(tra_x, True)
-    z2 = tbr.transform(val_x, False)
+    zz = tra_x.apply(lambda x: len(x.unique())).sort_values(ascending=False)
+    small_cats = zz[zz<5].index.tolist()
+    
+    st=time.time()
+    tbr = AutoCombine(cols=small_cats[:10], order=2, null_value=-999, num_process=5)
+    z1 = tbr.fit(tra_x)
+    z2 = tbr.transform(val_x)
+    print(time.time()-st)

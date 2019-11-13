@@ -1,3 +1,6 @@
+import pandas as pd
+import numpy as np
+
 #ROC曲线
 def Roc_Curve(y_true,y_pre,have_auc=False):
     '''df as gbie p'''

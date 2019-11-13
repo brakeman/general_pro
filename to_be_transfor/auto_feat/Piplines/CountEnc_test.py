@@ -4,7 +4,7 @@ import numpy as np
 import random
 import time
 from functools import wraps
-
+import ipdb
 
 def timer(function):
     @wraps(function)
@@ -28,11 +28,17 @@ class CountEnc(BaseEstimator, TransformerMixin):
         self.col_dics = {}
     
     @timer
-    def fit(self, df, y=None):
+    def fit(self, x, y=None):
         self.col_dics = {}
         for col in self.cols:
-            Ser = df[col].copy()
-            self.col_dics[col] = Ser.value_counts().to_dict()
+#             ipdb.set_trace()
+            Ser = x[col].copy()
+            df = pd.DataFrame()
+            df['count_']=Ser.value_counts()
+            df['rank_']=range(df.shape[0])
+            self.col_dics[col] = {}
+            self.col_dics[col]['count']=df.count_.to_dict()
+            self.col_dics[col]['rank']=df.rank_.to_dict()
         return self
     
     def transform(self, x):
@@ -40,12 +46,15 @@ class CountEnc(BaseEstimator, TransformerMixin):
         for col in self.cols:
             if col not in self.col_dics:
                 raise Exception('col:{} not in col_dics'.format(col))
-            col_dic = self.col_dics[col]
-            new_name = 'Count('+col+')'
-            df[new_name] = x[col].map(col_dic)
+            col_dic = self.col_dics[col]                
+            new_name1 = 'Count('+col+')'
+            new_name2 = 'CountRank('+col+')'
+            df[new_name1] = x[col].map(col_dic['count'])
+            df[new_name2] = x[col].map(col_dic['rank'])
         return df
     
 if __name__ == '__main__':
+
     data_path = './data/'
     # test.csv  train.csv  train_target.csv
     tra_x = pd.read_csv(data_path + '/train.csv')
