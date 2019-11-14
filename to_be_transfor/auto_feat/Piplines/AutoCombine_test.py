@@ -42,6 +42,7 @@ class AutoCombine(BaseEstimator, TransformerMixin):
         return DF, col_dicts
     
     def fit(self, x, y=None):
+        st = time.time()
         if self.num_process:
             print('------------------------{}-{}----------------------------'.format(self.__class__.__name__, 'fit()'))
             print('program is going to use multiprocessing with {} Ps'.format(self.num_process))
@@ -62,6 +63,7 @@ class AutoCombine(BaseEstimator, TransformerMixin):
                 self.col_dicts.update(d)
         else:
             new_x =  self._fit(x, self.combine_list)
+        print('------------------------use:{} s----------------------------'.format(time.time()-st))
         return self
         
     def _transform(self, x, combine_list):
@@ -79,6 +81,7 @@ class AutoCombine(BaseEstimator, TransformerMixin):
     
     def transform(self, x):
         if self.num_process:
+            st = time.time()
             print('------------------------{}-{}----------------------------'.format(self.__class__.__name__, 'transform()'))
             print('program is going to use multiprocessing with {} Ps'.format(self.num_process))
             p2 = Pool(self.num_process)
@@ -91,6 +94,7 @@ class AutoCombine(BaseEstimator, TransformerMixin):
             p2.close()
             p2.join()
             new_x = pd.concat([i.get() for i in rst], axis=1)
+            print('------------------------use:{} s----------------------------'.format(time.time()-st))
             return new_x
         else:
             print('will not use multi processing')

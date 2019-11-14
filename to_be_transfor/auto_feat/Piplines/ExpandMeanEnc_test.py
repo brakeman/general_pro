@@ -20,6 +20,7 @@ def timer(function):
 
 class ExpandMeanEnc(BaseEstimator, TransformerMixin):
     '''
+    允许非scalar;
     cumsum = df_tr.groupby(col)['target'].cumsum() - df_tr['target']
     cumcnt = df_tr.groupby(col).cumcount()
     train_new[col + '_mean_target'] = cusum/cumcnt
@@ -33,6 +34,8 @@ class ExpandMeanEnc(BaseEstimator, TransformerMixin):
     @timer
     def fit(self, df, y):
         self.col_dics = {}
+        if self.cols is None:
+            self.cols=df.columns
         for col in self.cols:
 #             ipdb.set_trace()
             tmp_df = pd.concat([df[col], y], axis=1)
