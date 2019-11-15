@@ -74,6 +74,7 @@ class AutoCombine(BaseEstimator, TransformerMixin):
             if idx%(length//2)==0 and self.verbose==1:
                 print('processing col: {}, {}/{}'.format(new_name, idx, length))
             tra_unique = self.col_dicts[new_name]
+#             ipdb.set_trace()
             DF[new_name] = (x[list(col_names)].astype(str)+'|').sum(axis=1)
             # 凡是 test中存在， train中不存在的，变为null
             DF[new_name][~DF[new_name].isin(tra_unique)] = self.null_value

@@ -176,38 +176,33 @@ class ChiMerge(BaseEstimator, TransformerMixin):
         return df
 
 
+
 if __name__ == '__main__':
-    data_path = './data'
+    data_path = './data/'
     # test.csv  train.csv  train_target.csv
     tra_x = pd.read_csv(data_path + '/train.csv')
     tra_y = pd.read_csv(data_path + '/train_target.csv')
+    tes_x = pd.read_csv(data_path + '/test.csv')
     final = tra_x.merge(tra_y,on='id')
-    final['dist']= final.dist.apply(lambda x: int(x/100))
-    random.seed(1)
-    tra_id = set(random.sample(range(final.shape[0]),70000))
-    val_id = set(range(final.shape[0])) - tra_id
-    tra_id = [i for i in tra_id]
-    val_id = [i for i in val_id]
-    Train = final.iloc[tra_id,:]
-    Valid = final.iloc[val_id,:]
+    final['certValidStop'] = final.certValidStop.astype(int)
+    final.fillna(-999,inplace=True)
+
+    file = open('/data-0/qibo/pickle_files/cv_idx_dic.pickle', 'rb')
+    idx_dic = pickle.load(file)
+    tra_id, val_id = idx_dic['cv_0']['train_idx'], idx_dic['cv_0']['valid_idx']
+
+
+    Train = final.iloc[tra_id,:].set_index(keys='id')
+    Valid = final.iloc[val_id,:].set_index(keys='id')
     tra_x, tra_y = Train.drop('target', axis=1), Train.target
     val_x, val_y = Valid.drop('target', axis=1), Valid.target
-    cm = ChiMerge(cols=['basicLevel', 'age'], null_value=-999, max_groups=10)
-    _ = cm.fit(Train, Train.target)
-    bb_tra = cm.transform(Train)
-    bb_val = cm.transform(Valid)
+
+    woe = WOE_enc(cols=['basicLevel', 'age'], null_value=-999)
+    _ = woe.fit(tra_x, tra_y)
+    b = woe.transform(val_x)
     
-    woe = WOE_enc(cols=['basicLevel', 'age'])
-    bb_tra['target']=Train.target
-    _ = woe.fit(bb_tra, Train.target)
-    b = woe.transform(bb_val)
-    
-    from sklearn.pipeline import Pipeline
-    from sklearn import svm
     cm = ChiMerge(cols=['basicLevel', 'age'], null_value=-999, max_groups=10)
-    woe = WOE_enc(cols=['basicLevel', 'age'])
-    clf = svm.SVC(kernel='linear')
-    pip = Pipeline([('cm', cm), ('woe', woe)])
-    X, y = tra_x, tra_y
-    pip.fit(X=Train, y=Train.target)
-    pip.transform(Valid)
+    _ = cm.fit(tra_x, tra_y)
+    bb_tra = cm.transform(tra_x)
+    bb_val = cm.transform(val_x)
+    

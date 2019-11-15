@@ -15,33 +15,80 @@ def Roc_Curve(y_true,y_pre,have_auc=False):
         return auc,roc_curve
 
 #KS曲线
-def KS(y_true,y_pre,group_sep=0.01):
-    from copy import deepcopy
+def PlotKS(preds, labels, n, asc):
+    
+    # preds is score: asc=1
+    # preds is prob: asc=0
     import matplotlib.pyplot as plt
-    plt.style.use('ggplot')
-    '''df as gbie p'''
-    DfIn=pd.DataFrame([y_true,y_pre]).T
-    DfIn.columns=['gbie','p']
-    DfIn=DfIn.sort_values('p',ascending=False)
-    length=len(DfIn)
-    group=pd.cut(list(range(length)),bins=1.0/group_sep,labels=np.arange(0+group_sep,1+group_sep,group_sep))
-    DfIn['group']=list(group)
-    length_1=sum(DfIn.gbie)
-    length_0=length-length_1
-    cum_0=[]
-    cum_1=[]
-    for i in sorted(set(group)):
-        cum_tmp=DfIn.loc[DfIn.group<=i,'gbie']
-        cum_0.append(float(len(cum_tmp)-sum(cum_tmp))/length_0)
-        cum_1.append(float(sum(cum_tmp))/length_1)
-    DfPlot=pd.DataFrame(np.array([sorted(list(set(group))),cum_0,cum_1]).T, 
-                        columns=['Percent','Good','Bad'])
-    Ks=max(DfPlot.Bad-DfPlot.Good)
-    argmax=DfPlot.loc[(DfPlot.Bad-DfPlot.Good).argmax(),'Percent']
-    DfPlot['ks']=DfPlot.Bad-DfPlot.Good
-    DfPlot.plot('Percent',['Good','Bad','ks'],\
-                title='KS Curve\n ks=%.3f and cut_off=%.2f' % (Ks,argmax))
-    return plt,Ks
+    pred = preds  # 预测值
+    bad = labels  # 取1为bad, 0为good
+    ksds = pd.DataFrame({'bad': bad, 'pred': pred})
+    ksds['good'] = 1 - ksds.bad
+    
+    if asc == 1:
+        ksds1 = ksds.sort_values(by=['pred', 'bad'], ascending=[True, True])
+    elif asc == 0:
+        ksds1 = ksds.sort_values(by=['pred', 'bad'], ascending=[False, True])
+    ksds1.index = range(len(ksds1.pred))
+    ksds1['cumsum_good1'] = 1.0*ksds1.good.cumsum()/sum(ksds1.good)
+    ksds1['cumsum_bad1'] = 1.0*ksds1.bad.cumsum()/sum(ksds1.bad)
+    
+    if asc == 1:
+        ksds2 = ksds.sort_values(by=['pred', 'bad'], ascending=[True, False])
+    elif asc == 0:
+        ksds2 = ksds.sort_values(by=['pred', 'bad'], ascending=[False, False])
+    ksds2.index = range(len(ksds2.pred))
+    ksds2['cumsum_good2'] = 1.0*ksds2.good.cumsum()/sum(ksds2.good)
+    ksds2['cumsum_bad2'] = 1.0*ksds2.bad.cumsum()/sum(ksds2.bad)
+    
+    # ksds1 ksds2 -> average
+    ksds = ksds1[['cumsum_good1', 'cumsum_bad1']]
+    ksds['cumsum_good2'] = ksds2['cumsum_good2']
+    ksds['cumsum_bad2'] = ksds2['cumsum_bad2']
+    ksds['cumsum_good'] = (ksds['cumsum_good1'] + ksds['cumsum_good2'])/2
+    ksds['cumsum_bad'] = (ksds['cumsum_bad1'] + ksds['cumsum_bad2'])/2
+    
+    # ks
+    ksds['ks'] = ksds['cumsum_bad'] - ksds['cumsum_good']
+    ksds['tile0'] = range(1, len(ksds.ks) + 1)
+    ksds['tile'] = 1.0*ksds['tile0']/len(ksds['tile0'])
+    
+    qe = list(np.arange(0, 1, 1.0/n))
+    qe.append(1)
+    qe = qe[1:]
+    
+    ks_index = pd.Series(ksds.index)
+    ks_index = ks_index.quantile(q = qe)
+    ks_index = np.ceil(ks_index).astype(int)
+    ks_index = list(ks_index)
+    
+    ksds = ksds.loc[ks_index]
+    ksds = ksds[['tile', 'cumsum_good', 'cumsum_bad', 'ks']]
+    ksds0 = np.array([[0, 0, 0, 0]])
+    ksds = np.concatenate([ksds0, ksds], axis=0)
+    ksds = pd.DataFrame(ksds, columns=['tile', 'cumsum_good', 'cumsum_bad', 'ks'])
+    
+    ks_value = ksds.ks.max()
+    ks_pop = ksds.tile[ksds.ks.idxmax()]
+    print ('ks_value is ' + str(np.round(ks_value, 4)) + ' at pop = ' + str(np.round(ks_pop, 4)))
+    
+    # chart
+    plt.plot(ksds.tile, ksds.cumsum_good, label='cum_good',
+                         color='blue', linestyle='-', linewidth=2)
+                         
+    plt.plot(ksds.tile, ksds.cumsum_bad, label='cum_bad',
+                        color='red', linestyle='-', linewidth=2)
+                        
+    plt.plot(ksds.tile, ksds.ks, label='ks',
+                   color='green', linestyle='-', linewidth=2)
+                       
+    plt.axvline(ks_pop, color='gray', linestyle='--')
+    plt.axhline(ks_value, color='green', linestyle='--')
+    plt.axhline(ksds.loc[ksds.ks.idxmax(), 'cumsum_good'], color='blue', linestyle='--')
+    plt.axhline(ksds.loc[ksds.ks.idxmax(),'cumsum_bad'], color='red', linestyle='--')
+    plt.title('KS=%s ' %np.round(ks_value, 4) +  
+                'at Pop=%s' %np.round(ks_pop, 4), fontsize=15)
+    return ksds
 
 #PSI计算
 def Psi(y_future, y_expect, n=10,bins=None):
