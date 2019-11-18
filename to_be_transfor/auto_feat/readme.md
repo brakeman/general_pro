@@ -41,43 +41,6 @@
         自动合箱；
     - 手工1阶特征 提交一下看看 完成
     - chimerge_woe 完成
-## 今天to be done;
-    - woe , target-enco [zhihu](https://zhuanlan.zhihu.com/p/91098922)
-    - 知道怎么做pipeline 吗？ [22]<https://github.com/scikit-learn-contrib/categorical-encoding>
-        - TargetEncoder(cols=['CHAS', 'RAD']).fit(X_train, y_train)
-        - 把 cols 放在init 里；
-
-    - 重构代码
-    - 采样增加随机性 
-    - 阅读文章  
-    - 一个是feat importance 的参数选择，双选！ 完成
-    - 一个是dummy_top_k 的收集方式，是滚动式为好，改！ 完成
-    - bug: 某种情况下会使得两个train ,test cols 不一致；
-            - dummy！ train col 中有，比如 123 这个数， 但是test中没有；
-            - 只需要 tra_x[val_x.columns]
-            train:(70000, 15245)   valid:(62029, 13915)
-    - PPP 一致性功能
-    
-# handcraft pipeline
-    # id 类 certId, dist, bankCard,
-    # 时间类  certValidBegin, certValidStop，weekday，setupHour
-        - 分箱子
-        - 是否周末 weekday
-        - 是否白天
-    
-    # rank类 age, lmt 
-        - 严格分箱，弃旧不用；
-        
-    # 相似类 
-        - certId, dist, residentAddr
-        - certValidStop, certValidBegin
-        - highestEdu, edu
-        # DIFF, DIV, SUM, MULTIPLY
-    
-
-## to be done:
-    - 时序形表格特征提取/transform
-    - 不平衡数据
     
     
     
