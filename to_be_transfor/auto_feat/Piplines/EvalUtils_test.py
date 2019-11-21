@@ -1,6 +1,53 @@
 import pandas as pd
 import numpy as np
 
+
+# https://github.com/oskird/Kaggle-Home-Credit-Default-Risk-Solution/blob/6cda64ec01e80018a4df61fd4da1a9c568c03a61/EDA.ipynb
+def plot_numerical_bytarget(data, col, target, figsize=[6, 6]):
+    plt.figure(figsize=figsize)
+    # Calculate the correlation coefficient between the new variable and the target
+    corr = data[target].corr(data[col])
+    
+    # Calculate medians for repaid vs not repaid
+    avg_repaid = data.loc[data[target] == 0, col].median()
+    avg_not_repaid = data.loc[data[target] == 1, col].median()
+    
+    plt.figure(figsize = figsize)
+    
+    # Plot the distribution for target == 0 and target == 1
+    sns.kdeplot(data.loc[data[target] == 0, col], label = '{} == 0'.format(target))
+    sns.kdeplot(data.loc[data[target] == 1, col], label = '{} == 1'.format(target))
+    
+    # label the plot
+    plt.xlabel(col); plt.ylabel('Density'); plt.title('%s Distribution' % col)
+    plt.legend();
+    
+    # print out the correlation
+    print('The correlation between %s and the TARGET is %0.4f' % (col, corr))
+
+# plot_numerical_bylabel(X, X.columns[0], 'isTrain')
+
+
+def KS_check(tra, test, columns=None):
+    '''删除掉 分布不一致的特征'''
+    from scipy.stats import ks_2samp
+    features_check = []
+    if columns is None:
+        assert set(tra.columns) == set(test.columns)
+        columns_to_check = tra.columns
+    else:
+        assert (len(set(columns)-set(tra.columns))==0) & (len(set(columns)-set(test.columns))==0)
+        columns_to_check = columns
+
+    for i in columns_to_check:
+        features_check.append(ks_2samp(tra[i], test[i])[1])
+
+    features_check = pd.Series(features_check, index=columns_to_check).sort_values() 
+    features_discard = list(features_check[features_check==0].index)
+    print('drop {}/{} columns'.format(len(features_discard), len(columns_to_check)))
+    return features_discard
+
+
 #ROC曲线
 def Roc_Curve(y_true,y_pre,have_auc=False):
     '''df as gbie p'''

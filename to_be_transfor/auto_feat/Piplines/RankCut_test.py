@@ -20,6 +20,7 @@ def timer(function):
 class RankCut(BaseEstimator, TransformerMixin):
     '''
     排序分箱；
+    必须 return_numeric 才能后接CountEnc; 
     处理了两端异常；
     '''
     def __init__(self, cols, bins, null_value, return_numeric): # no *args and **kwargs
@@ -42,11 +43,11 @@ class RankCut(BaseEstimator, TransformerMixin):
         Ser[(Ser<min_)&(Ser!=-self.null_value)] = min_
         Ser[(Ser>=max_)&(Ser!=-self.null_value)] = max_-0.0001
         if self.return_numeric:
-            Ser[Ser!=-self.null_value], new_bins = pd.cut(Ser[Ser!=-self.null_value], 
+            Ser[Ser!=self.null_value], new_bins = pd.cut(Ser[Ser!=self.null_value], 
                                                           bins, right=False, 
                                                           retbins=True, labels=labels)
         else:
-            Ser[Ser!=-self.null_value], new_bins = pd.cut(Ser[Ser!=-self.null_value], 
+            Ser[Ser!=self.null_value], new_bins = pd.cut(Ser[Ser!=self.null_value], 
                                                           bins, right=False, retbins=True)
         return Ser, new_bins
     
