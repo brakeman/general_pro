@@ -12,7 +12,7 @@ class WOE_enc(BaseEstimator, TransformerMixin):
     0.1-0.29	中
     0.3-0.49	高
     '''
-    def __init__(self, cols, null_value, iv_min=0.05, iv_max=0.5, verbose=1): # no *args and **kwargs
+    def __init__(self, cols, null_value, iv_min, iv_max, verbose=1): # no *args and **kwargs
         super().__init__()
         self.cols = cols
         self.cols_info = {}
@@ -199,6 +199,7 @@ if __name__ == '__main__':
 
     woe = WOE_enc(cols=['basicLevel', 'age'], null_value=-999)
     _ = woe.fit(tra_x, tra_y)
+    a = woe.transform(tra_x)
     b = woe.transform(val_x)
     
     cm = ChiMerge(cols=['basicLevel', 'age'], null_value=-999, max_groups=10)

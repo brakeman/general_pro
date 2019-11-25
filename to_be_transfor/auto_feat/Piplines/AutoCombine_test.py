@@ -104,27 +104,27 @@ class AutoCombine(BaseEstimator, TransformerMixin):
             return self._transform(x, self.combine_list)
     
     
-# if __name__ == '__main__':
-#     data_path = './data'
-#     # test.csv  train.csv  train_target.csv
-#     tra_x = pd.read_csv(data_path + '/train.csv')
-#     tra_y = pd.read_csv(data_path + '/train_target.csv')
-#     final = tra_x.merge(tra_y,on='id')
-#     final['dist']= final.dist.apply(lambda x: int(x/100))
-#     random.seed(1)
-#     tra_id = set(random.sample(range(final.shape[0]),70000))
-#     val_id = set(range(final.shape[0])) - tra_id
-#     tra_id = [i for i in tra_id]
-#     val_id = [i for i in val_id]
-#     Train = final.iloc[tra_id,:]
-#     Valid = final.iloc[val_id,:]
-#     tra_x, tra_y = Train.drop('target', axis=1), Train.target
-#     val_x, val_y = Valid.drop('target', axis=1), Valid.target
-#     zz = tra_x.apply(lambda x: len(x.unique())).sort_values(ascending=False)
-#     small_cats = zz[zz<5].index.tolist()
+if __name__ == '__main__':
+    data_path = './data'
+    # test.csv  train.csv  train_target.csv
+    tra_x = pd.read_csv(data_path + '/train.csv')
+    tra_y = pd.read_csv(data_path + '/train_target.csv')
+    final = tra_x.merge(tra_y,on='id')
+    final['dist']= final.dist.apply(lambda x: int(x/100))
+    random.seed(1)
+    tra_id = set(random.sample(range(final.shape[0]),70000))
+    val_id = set(range(final.shape[0])) - tra_id
+    tra_id = [i for i in tra_id]
+    val_id = [i for i in val_id]
+    Train = final.iloc[tra_id,:]
+    Valid = final.iloc[val_id,:]
+    tra_x, tra_y = Train.drop('target', axis=1), Train.target
+    val_x, val_y = Valid.drop('target', axis=1), Valid.target
+    zz = tra_x.apply(lambda x: len(x.unique())).sort_values(ascending=False)
+    small_cats = zz[zz<5].index.tolist()
     
-#     st=time.time()
-#     tbr = AutoCombine(cols=small_cats[:10], order=2, null_value=-999, num_process=5)
-#     z1 = tbr.fit(tra_x)
-#     z2 = tbr.transform(val_x)
-#     print(time.time()-st)
+    st=time.time()
+    tbr = AutoCombine(cols=small_cats[:10], order=2, null_value=-999, num_process=5)
+    z1 = tbr.fit(tra_x)
+    z2 = tbr.transform(val_x)
+    print(time.time()-st)

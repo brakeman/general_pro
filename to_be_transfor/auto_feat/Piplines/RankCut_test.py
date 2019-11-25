@@ -6,16 +6,6 @@ import time
 from functools import wraps
 
 
-def timer(function):
-    @wraps(function)
-    def function_timer(*args, **kwargs):
-        t0 = time.time()
-        result = function(*args, **kwargs)
-        t1 = time.time()
-        print ("Total time running function: %s with %s seconds" %
-            (function.__name__, str(t1-t0)))
-        return result
-    return function_timer
 
 class RankCut(BaseEstimator, TransformerMixin):
     '''
@@ -51,7 +41,7 @@ class RankCut(BaseEstimator, TransformerMixin):
                                                           bins, right=False, retbins=True)
         return Ser, new_bins
     
-    @timer
+
     def fit(self, df, y=None):
         self.col_dics = {}
         self.cache=pd.DataFrame()

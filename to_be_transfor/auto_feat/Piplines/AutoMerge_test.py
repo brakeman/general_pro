@@ -59,7 +59,6 @@ class AutoMerge(BaseEstimator, TransformerMixin):
         if self.num_process!=None:
             self.sub_len = len(self.combine_list)//self.num_process+1
             self.sub_comb_list = [self.combine_list[x:x+self.sub_len] for x in range(0, len(self.combine_list), self.sub_len)]
-#         ipdb.set_trace()
         return self
     
     def transform(self, x):
@@ -80,8 +79,8 @@ class AutoMerge(BaseEstimator, TransformerMixin):
             print('------------------------use:{} s----------------------------'.format(time.time()-st))
             return new_x
         else:
-            print('nope, pls use multi processing')
-    
+            return self._transform(x, self.combine_list)
+            
     
 if __name__ == '__main__':
     data_path = './data/'
@@ -105,7 +104,7 @@ if __name__ == '__main__':
     zz = tra_x.apply(lambda x: len(x.unique())).sort_values(ascending=False)
     small_cats = zz[zz<5].index.tolist()
     st=time.time()
-    tbr = AutoMerge(cols=small_cats[:30], order=2, op='sub', null_value=-999, num_process=5, verbose=1)
+    tbr = AutoMerge(cols=small_cats[:30], order=2, op='sub', null_value=-999, num_process=None, verbose=1)
     tbr.fit(tra_x)
     z1 = tbr.transform(tra_x)
     z2 = tbr.transform(val_x)
