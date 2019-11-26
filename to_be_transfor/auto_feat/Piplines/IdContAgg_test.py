@@ -5,7 +5,7 @@ import random
 from sklearn.preprocessing import StandardScaler
 import time
 from functools import wraps
-import ipdb
+# import ipdb
 import pickle
 
 def timer(function):
@@ -42,8 +42,10 @@ class IdContAgg(BaseEstimator, TransformerMixin):
         for col in self.cols:
             for agg_type in self.agg_types:
                 new_col_name = '_'.join([col, self.cont_col, agg_type])
-#                 ipdb.set_trace()
                 DF[new_col_name] = x[col].map(self.col_dics[col][agg_type][agg_type])
+                if agg_type == 'mean':
+                    new_col = '_'.join([col, self.cont_col, agg_type])+'_diff'
+                    DF[new_col] = x[self.cont_col] - DF[new_col_name]
         return DF
     
 if __name__ == '__main__':
