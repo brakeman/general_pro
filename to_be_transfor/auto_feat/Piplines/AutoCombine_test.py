@@ -35,7 +35,7 @@ class AutoCombine(BaseEstimator, TransformerMixin):
         for idx, col_names in enumerate(combine_list):
             new_name = 'comb('+','.join(col_names)+')'
             length=len(combine_list)
-            if idx%(length//2)==0 and self.verbose==1:
+            if length!=1 and idx%(length//2)==0 and self.verbose==1:
                 print('processing col: {}, {}/{}'.format(new_name, idx, length))
             DF[new_name] = (x[list(col_names)].astype(str)+'|').sum(axis=1)
             col_dicts[new_name] =  DF[new_name].unique()
@@ -62,7 +62,9 @@ class AutoCombine(BaseEstimator, TransformerMixin):
             for d in list_dic:
                 self.col_dicts.update(d)
         else:
-            new_x =  self._fit(x, self.combine_list)
+            new_x, col_dicts =  self._fit(x, self.combine_list)
+            self.col_dicts =col_dicts
+            
         print('------------------------use:{} s----------------------------'.format(time.time()-st))
         return self
         
@@ -71,9 +73,10 @@ class AutoCombine(BaseEstimator, TransformerMixin):
         for idx, col_names in enumerate(combine_list):
             new_name = 'comb('+','.join(col_names)+')'
             length = len(combine_list)
-            if idx%(length//2)==0 and self.verbose==1:
+            if length!=1 and idx%(length//2)==0 and self.verbose==1:
                 print('processing col: {}, {}/{}'.format(new_name, idx, length))
             tra_unique = self.col_dicts[new_name]
+#             ipdb.set_trace()
             DF[new_name] = (x[list(col_names)].astype(str)+'|').sum(axis=1)
             # 凡是 test中存在， train中不存在的，变为null
             DF[new_name][~DF[new_name].isin(tra_unique)] = self.null_value
@@ -98,7 +101,7 @@ class AutoCombine(BaseEstimator, TransformerMixin):
             return new_x
         else:
             print('will not use multi processing')
-            return self._transform(x)
+            return self._transform(x, self.combine_list)
     
     
 if __name__ == '__main__':

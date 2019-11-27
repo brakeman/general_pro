@@ -4,40 +4,38 @@ import numpy as np
 import random
 from sklearn.preprocessing import StandardScaler
 import time
+import sys
+sys.path.append('../')
+from auto_feat.Piplines import CountEnc_test
 from functools import wraps
 import ipdb
 import pickle
+import lightgbm as lgb
 
 
-class CountEnc(BaseEstimator, TransformerMixin):
+class ShuffleAugment(BaseEstimator, TransformerMixin):
     '''
     '''
-    def __init__(self, cols): # no *args and **kwargs
+    def __init__(self, cols, fake_ratio, target_name): # no *args and **kwargs
         super().__init__()
         self.cols = cols
-        self.col_dics = {}
-
-    
-
-    def fit(self, x, y=None):
-        self.col_dics = {}
-        if self.cols is None:
-            self.cols = x.columns
-        for col in self.cols:
-            self.col_dics[col] = x[col].value_counts()
+        self.target_name = target_name
+        self.fake_ratio = fake_ratio
+        
+    def fit(self, x, y):
+        temp_DF = x.join(y)
+        self.pos_df, self.neg_df = temp_DF[temp_DF[self.target_name]==0], temp_DF[temp_DF[self.target_name]==1]
+        assert (self.pos_df.shape[0]>0) & (self.neg_df.shape[0]>0)
         return self
     
-    
     def transform(self, x):
-        df = pd.DataFrame()
+        fake_pos, fake_neg = pd.DataFrame(), pd.DataFrame()
         for col in self.cols:
-            if col not in self.col_dics:
-                raise Exception('col:{} not in col_dics'.format(col))
-            col_dic = self.col_dics[col]                
-            new_name1 = 'Count('+col+')'
-            df[new_name1] = x[col].map(col_dic)
-        return df
-    
+            fake_pos[col] = self.pos_df.sample(frac=self.fake_ratio)[col].tolist()
+            fake_neg[col] = self.neg_df.sample(frac=self.fake_ratio)[col].tolist()
+        fake_pos[self.target_name] = 0
+        fake_neg[self.target_name] = 1
+        return fake_pos.append(fake_neg)
     
 if __name__ == '__main__':
 
@@ -59,9 +57,8 @@ if __name__ == '__main__':
     Valid = final.iloc[val_id,:].set_index(keys='id')
     tra_x, tra_y = Train.drop('target', axis=1), Train.target
     val_x, val_y = Valid.drop('target', axis=1), Valid.target
-    disc_vars = ['ethnic', 'job', 'linkRela']
-    Count = CountEnc(cols=disc_vars)
-    Count.fit(tra_x)
-    tra_rc = Count.transform(tra_x)
-    val_rc = Count.transform(val_x)
-    
+    disc_vars = ['job', 'linkRela']
+        
+    SA = ShuffleAugment(cols=disc_vars, fake_ratio=1, target_name='target')
+    SA.fit(tra_x, tra_y)
+    fake =SA.transform(val_x)
