@@ -1,0 +1,603 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="18453080-e709-4fc6-b3ef-ed9aa872c654" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/Piplines/MeanTarget_test.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../NER_sms/Clf.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../NER_sms/ClfTemplates.py" beforeDir="false" afterPath="$PROJECT_DIR$/../../../NER_sms/ClfTemplates.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../NER_sms/ClfUse.py" beforeDir="false" afterPath="$PROJECT_DIR$/../../../NER_sms/ClfUse.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../NER_sms/Ner_data_process.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../NER_sms/Ner_model.py" beforeDir="false" afterPath="$PROJECT_DIR$/../../../NER_sms/Ner_model.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../NER_sms/model.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../NER_sms/model/model.py" beforeDir="false" afterPath="$PROJECT_DIR$/../../../NER_sms/model/model.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/cda/to_bin/cart_to_bin.py" beforeDir="false" afterPath="$PROJECT_DIR$/../../../工作/cda/to_bin/cart_to_bin.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/.ipynb_checkpoints/3-模块化 RuleCLF+NER-checkpoint.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/.ipynb_checkpoints/4-各种分类模型实验-checkpoint.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/.ipynb_checkpoints/A-模块化CLF-模型-finish-Copy1-checkpoint.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/.ipynb_checkpoints/B-GCN + textRank -checkpoint.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/.ipynb_checkpoints/C-CLF-实验2-GraphSage-Copy1-checkpoint.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/.ipynb_checkpoints/C-CLF-实验2-GraphSage-checkpoint.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/.ipynb_checkpoints/CLF-BERT-checkpoint.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/.ipynb_checkpoints/CLF-实验1-只用self_feat-checkpoint.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/.ipynb_checkpoints/CLF-实验2-GraphSage-checkpoint.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/.ipynb_checkpoints/CLF-实验2-GraphSage-loss-function-checkpoint.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/.ipynb_checkpoints/CLF-实验2-PinSage--checkpoint.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/.ipynb_checkpoints/CLF-实验3-GraphSage-loss-checkpoint.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/.ipynb_checkpoints/CLF-实验4-textRank构图-checkpoint.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/.ipynb_checkpoints/D-CLF-GraphSage-v2-Copy1-checkpoint.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/.ipynb_checkpoints/D-CLF-GraphSage-v2-checkpoint.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/.ipynb_checkpoints/SNTF- torch-checkpoint.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/.ipynb_checkpoints/graphsage_India_SMS_draft1-checkpoint.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/.ipynb_checkpoints/qb_test-Copy1-checkpoint.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/.ipynb_checkpoints/qb_test-char_emb-checkpoint.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/.ipynb_checkpoints/qb_test-char_emb-多任务-loss-checkpoint.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/.ipynb_checkpoints/qb_test-checkpoint.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/.ipynb_checkpoints/qb_test-ner_dumplicate测评-checkpoint.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/.ipynb_checkpoints/qb_test_clf_ner-Copy1-多任务-loss-checkpoint.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/.ipynb_checkpoints/qb_test_clf_ner-checkpoint.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/.ipynb_checkpoints/模块化 CLF - 只需要老办法 - finish-checkpoint.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/.ipynb_checkpoints/模块化 CLF - 用模型做分类；-checkpoint.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/.ipynb_checkpoints/模块化 CLF - 用模型做分类；GCN-checkpoint.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/.ipynb_checkpoints/模块化 CLF+NER-checkpoint.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/.ipynb_checkpoints/模块化 Rule_CLF+NER- finish-checkpoint.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/.ipynb_checkpoints/模块化 多任务-ner-clf-ALex-checkpoint.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/.ipynb_checkpoints/模块化CLF-模型-finish-checkpoint.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/.ipynb_checkpoints/模块化、-checkpoint.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/3-模块化 RuleCLF+NER.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/4-各种分类模型实验.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/A-模块化CLF-模型-finish-Copy1.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/B-GCN + textRank .ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/C-CLF-实验2-GraphSage-Copy1.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/C-CLF-实验2-GraphSage.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/CLF-BERT.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/CLF-实验1-只用self_feat.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/CLF-实验2-GraphSage-loss-function.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/CLF-实验2-GraphSage.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/CLF-实验2-PinSage-.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/CLF-实验3-GraphSage-loss.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/CLF-实验4-textRank构图.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/ClfTemplates.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/ClfUse.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/Clf_generate_templates.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/D-CLF-GraphSage-v2-Copy1.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/D-CLF-GraphSage-v2.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/GraphSage_0528" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/Ner_data_make.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/Ner_model.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/SNTF- torch.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/graphsage_India_SMS_draft1.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/model_clf_0524" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/qb_test-Copy1.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/qb_test-char_emb-多任务-loss.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/qb_test-char_emb.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/qb_test-ner_dumplicate测评.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/qb_test.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/qb_test_clf_ner-Copy1-多任务-loss.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/qb_test_clf_ner.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/setup.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/模块化 CLF - 只需要老办法 - finish.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/模块化 CLF - 用模型做分类；.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/模块化 CLF - 用模型做分类；GCN.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/模块化 CLF+NER.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/模块化 Rule_CLF+NER- finish.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/模块化 多任务-ner-clf-ALex.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/模块化CLF-模型-finish.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/git_repos/generate_template_qb_test/模块化、.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/任务3-ner/generate_sms_template/.idea/vcs.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/任务3-ner/综合/model/clustering.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/任务3-ner/综合/preprocessing/clean_all.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/任务5-图/GeniePath-master/qb_genie/layers.py" beforeDir="false" afterPath="$PROJECT_DIR$/../../../工作/任务5-图/GeniePath-master/qb_genie/layers.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/任务5-图/GeniePath-master/qb_genie/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/../../../工作/任务5-图/GeniePath-master/qb_genie/models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/任务5-图/graph_sage_qb/aggregator.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/任务5-图/graph_sage_qb/sampler.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/任务5-图/graphsage-master/qb_graph_sage/aggregator.py" beforeDir="false" afterPath="$PROJECT_DIR$/../../../工作/任务5-图/graphsage-master/qb_graph_sage/aggregator.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/任务5-图/graphsage-master/qb_graph_sage/ceshi.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/任务5-图/graphsage-master/qb_graph_sage/loss.py" beforeDir="false" afterPath="$PROJECT_DIR$/../../../工作/任务5-图/graphsage-master/qb_graph_sage/loss.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/任务5-图/graphsage-master/qb_graph_sage/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/../../../工作/任务5-图/graphsage-master/qb_graph_sage/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/任务5-图/graphsage-master/qb_graph_sage/minibatch.py" beforeDir="false" afterPath="$PROJECT_DIR$/../../../工作/任务5-图/graphsage-master/qb_graph_sage/minibatch.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/任务5-图/graphsage-master/qb_graph_sage/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/../../../工作/任务5-图/graphsage-master/qb_graph_sage/models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/任务5-图/graphsage-master/qb_graph_sage/sampler.py" beforeDir="false" afterPath="$PROJECT_DIR$/../../../工作/任务5-图/graphsage-master/qb_graph_sage/sampler.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/任务5-图/graphsage-master/qb_graph_sage/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/../../../工作/任务5-图/graphsage-master/qb_graph_sage/utils.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/任务6-推荐系统/DIN.py" beforeDir="false" afterPath="$PROJECT_DIR$/../../../工作/任务6-推荐系统/DIN.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/任务6-推荐系统/NFM.py" beforeDir="false" afterPath="$PROJECT_DIR$/../../../工作/任务6-推荐系统/NFM.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/任务6-推荐系统/layers/BIP.py" beforeDir="false" afterPath="$PROJECT_DIR$/../../../工作/任务6-推荐系统/layers/BIP.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/任务6-推荐系统/layers/InnerProduct.py" beforeDir="false" afterPath="$PROJECT_DIR$/../../../工作/任务6-推荐系统/layers/InnerProduct.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/任务6-推荐系统/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/../../../工作/任务6-推荐系统/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/任务6-推荐系统/models.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/任务_1_phoneCall/0401_runit/trans2pkl.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/任务_1_phoneCall/jiekou/PhoneCallBase.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/任务_1_phoneCall/jiekou/To_standard_TS.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/任务_1_phoneCall/jiekou/UnSupervise.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/任务_1_phoneCall/standard_ts/.idea/misc.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/任务_1_phoneCall/standard_ts/.idea/vcs.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/任务_1_phoneCall/standard_ts/PhoneCall_to_ts.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/任务_1_phoneCall/standard_ts/PhoneSMS_to_ts.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/任务_1_phoneCall/standard_ts/To_Ts_DF_Base.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../工作/任务_1_phoneCall/torch/DL/models/0415_var_len.py" beforeDir="false" afterPath="$PROJECT_DIR$/../../../工作/任务_1_phoneCall/torch/DL/models/0415_var_len.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../杨博/NFM/.idea/vcs.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../杨博/NFM/hhj_gpu.py" beforeDir="false" />
+    </list>
+    <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileEditorManager">
+    <leaf>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/Piplines/IndCountScore_test.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="297">
+              <caret line="276" column="26" selection-end-line="284" selection-end-column="25" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/Piplines/AutoMerge_test.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="417">
+              <caret line="105" column="26" lean-forward="true" selection-start-line="105" selection-start-column="26" selection-end-line="105" selection-end-column="26" />
+              <folding>
+                <element signature="e#0#56#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/Piplines/RankEnc_test.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state>
+              <folding>
+                <element signature="e#0#56#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/Piplines/AutoCombine_test.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="417">
+              <caret line="112" lean-forward="true" selection-start-line="112" selection-end-line="112" />
+              <folding>
+                <element signature="e#0#56#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/Piplines/ContTransform_test.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="-185">
+              <caret line="7" column="7" selection-start-line="7" selection-start-column="7" selection-end-line="7" selection-end-column="7" />
+              <folding>
+                <element signature="e#0#56#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/Piplines/CountEnc_test.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="285">
+              <caret line="19" column="51" selection-start-line="19" selection-start-column="47" selection-end-line="19" selection-end-column="51" />
+              <folding>
+                <element signature="e#0#56#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/Piplines/LabelEnc_test.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state>
+              <folding>
+                <element signature="e#0#56#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/Piplines/MeanTarget_test.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="-213">
+              <caret line="9" column="20" selection-start-line="9" selection-start-column="20" selection-end-line="9" selection-end-column="20" />
+              <folding>
+                <element signature="e#0#56#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/EvalUtil/Eval.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="1725">
+              <caret line="245" selection-start-line="245" selection-end-line="245" />
+              <folding>
+                <element signature="e#0#19#0" expanded="true" />
+                <element signature="e#133#3093#0" />
+                <element signature="e#3155#3969#0" />
+                <element signature="e#6405#11696#0" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/Piplines/IdContAgg_test.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="417">
+              <caret line="44" column="24" selection-start-line="44" selection-start-column="24" selection-end-line="44" selection-end-column="24" />
+              <folding>
+                <element signature="e#0#56#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+    </leaf>
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
+  </component>
+  <component name="FindInProjectRecents">
+    <findStrings>
+      <find>PlotKS</find>
+    </findStrings>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/../../.." />
+  </component>
+  <component name="IdeDocumentHistory">
+    <option name="CHANGED_PATHS">
+      <list>
+        <option value="$PROJECT_DIR$/Piplines/ContTransfrom.py" />
+        <option value="$PROJECT_DIR$/Piplines/ContTransfom.py" />
+        <option value="$PROJECT_DIR$/EvalUtil/Eval.py" />
+        <option value="$PROJECT_DIR$/Piplines/ContTransform_test.py" />
+        <option value="$PROJECT_DIR$/Piplines/CountEnc_test.py" />
+        <option value="$PROJECT_DIR$/Piplines/IdContAgg_test.py" />
+        <option value="$PROJECT_DIR$/Piplines/IndCountScore_test.py" />
+        <option value="$PROJECT_DIR$/Piplines/AutoCombine_test.py" />
+        <option value="$PROJECT_DIR$/Piplines/AutoMerge_test.py" />
+        <option value="$PROJECT_DIR$/Piplines/MeanTarget_test.py" />
+      </list>
+    </option>
+  </component>
+  <component name="ProjectConfigurationFiles">
+    <option name="files">
+      <list>
+        <option value="$PROJECT_DIR$/.idea/vcs.xml" />
+      </list>
+    </option>
+  </component>
+  <component name="ProjectFrameBounds" fullScreen="true">
+    <option name="width" value="1440" />
+    <option name="height" value="900" />
+  </component>
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectView">
+    <navigator proportions="" version="1">
+      <foldersAlwaysOnTop value="true" />
+    </navigator>
+    <panes>
+      <pane id="Scope" />
+      <pane id="ProjectPane">
+        <subPane>
+          <expand>
+            <path>
+              <item name="单测" type="b2602c69:ProjectViewProjectNode" />
+              <item name="单测" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="单测" type="b2602c69:ProjectViewProjectNode" />
+              <item name="单测" type="462c0819:PsiDirectoryNode" />
+              <item name="EvalUtil" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="单测" type="b2602c69:ProjectViewProjectNode" />
+              <item name="单测" type="462c0819:PsiDirectoryNode" />
+              <item name="Piplines" type="462c0819:PsiDirectoryNode" />
+            </path>
+          </expand>
+          <select />
+        </subPane>
+      </pane>
+    </panes>
+  </component>
+  <component name="PropertiesComponent">
+    <property name="ASKED_SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
+  </component>
+  <component name="RunDashboard">
+    <option name="ruleStates">
+      <list>
+        <RuleState>
+          <option name="name" value="ConfigurationTypeDashboardGroupingRule" />
+        </RuleState>
+        <RuleState>
+          <option name="name" value="StatusDashboardGroupingRule" />
+        </RuleState>
+      </list>
+    </option>
+  </component>
+  <component name="RunManager" selected="Python.MeanTarget_test">
+    <configuration name="AutoCombine_test" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <module name="单测" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/Piplines" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/Piplines/AutoCombine_test.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="AutoMerge_test" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <module name="单测" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/Piplines" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/Piplines/AutoMerge_test.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="IndCountScore_test" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <module name="单测" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/Piplines" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/Piplines/IndCountScore_test.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="MeanTarget_test" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <module name="单测" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/Piplines" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/Piplines/MeanTarget_test.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="RankEnc_test" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <module name="单测" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/Piplines" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/Piplines/RankEnc_test.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Python.MeanTarget_test" />
+        <item itemvalue="Python.RankEnc_test" />
+        <item itemvalue="Python.AutoMerge_test" />
+        <item itemvalue="Python.AutoCombine_test" />
+        <item itemvalue="Python.IndCountScore_test" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="18453080-e709-4fc6-b3ef-ed9aa872c654" name="Default Changelist" comment="" />
+      <created>1575943793039</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1575943793039</updated>
+    </task>
+    <servers />
+  </component>
+  <component name="ToolWindowManager">
+    <frame x="0" y="0" width="1440" height="900" extended-state="0" />
+    <editor active="true" />
+    <layout>
+      <window_info id="Favorites" side_tool="true" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.24947146" />
+      <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
+      <window_info anchor="bottom" id="Version Control" />
+      <window_info anchor="bottom" id="Python Console" weight="0.32891566" />
+      <window_info anchor="bottom" id="Terminal" />
+      <window_info anchor="bottom" id="Event Log" side_tool="true" />
+      <window_info anchor="bottom" id="Message" order="0" />
+      <window_info anchor="bottom" id="Find" order="1" />
+      <window_info anchor="bottom" id="Run" order="2" visible="true" weight="0.32891566" />
+      <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
+      <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
+      <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
+      <window_info anchor="bottom" id="TODO" order="6" />
+      <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
+      <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
+      <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
+    </layout>
+  </component>
+  <component name="editorHistoryManager">
+    <entry file="file://$PROJECT_DIR$/Piplines/ContTransfom.py">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Piplines/ContTransfrom.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="705">
+          <caret line="47" column="17" selection-start-line="47" selection-start-column="17" selection-end-line="47" selection-end-column="17" />
+          <folding>
+            <element signature="e#0#56#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Piplines/ContTransform_test.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-185">
+          <caret line="7" column="7" selection-start-line="7" selection-start-column="7" selection-end-line="7" selection-end-column="7" />
+          <folding>
+            <element signature="e#0#56#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Piplines/IdContAgg_test.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="417">
+          <caret line="44" column="24" selection-start-line="44" selection-start-column="24" selection-end-line="44" selection-end-column="24" />
+          <folding>
+            <element signature="e#0#56#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Piplines/LabelEnc_test.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state>
+          <folding>
+            <element signature="e#0#56#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Piplines/CountEnc_test.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="285">
+          <caret line="19" column="51" selection-start-line="19" selection-start-column="47" selection-end-line="19" selection-end-column="51" />
+          <folding>
+            <element signature="e#0#56#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Piplines/AutoCombine_test.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="417">
+          <caret line="112" lean-forward="true" selection-start-line="112" selection-end-line="112" />
+          <folding>
+            <element signature="e#0#56#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Piplines/AutoMerge_test.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="417">
+          <caret line="105" column="26" lean-forward="true" selection-start-line="105" selection-start-column="26" selection-end-line="105" selection-end-column="26" />
+          <folding>
+            <element signature="e#0#56#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Piplines/IndCountScore_test.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="297">
+          <caret line="276" column="26" selection-end-line="284" selection-end-column="25" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Piplines/MeanTarget_test.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-213">
+          <caret line="9" column="20" selection-start-line="9" selection-start-column="20" selection-end-line="9" selection-end-column="20" />
+          <folding>
+            <element signature="e#0#56#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Piplines/RankEnc_test.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state>
+          <folding>
+            <element signature="e#0#56#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/EvalUtil/Eval.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1725">
+          <caret line="245" selection-start-line="245" selection-end-line="245" />
+          <folding>
+            <element signature="e#0#19#0" expanded="true" />
+            <element signature="e#133#3093#0" />
+            <element signature="e#3155#3969#0" />
+            <element signature="e#6405#11696#0" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+  </component>
+</project>
