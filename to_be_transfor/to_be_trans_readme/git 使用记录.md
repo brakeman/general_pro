@@ -51,3 +51,13 @@
 
 ### git merge 出现矛盾怎么办？
     - git reset --hard # 如果发现矛盾可以把工作区和暂存区全部回滚到上一个版本，而后再merge就可以了
+
+
+## linux in studio
+
+- unzip permission deny, 只需要修改文件权限
+    将档案 file1.txt 设为所有人皆可读取 :
+    chmod a+r file1.txt
+
+- zip -r myfile.zip ./*
+  将当前目录下的所有文件和文件夹全部压缩成myfile.zip文件,－r表示递归压缩子目录下所有文件.
