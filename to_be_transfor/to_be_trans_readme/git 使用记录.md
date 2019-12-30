@@ -42,6 +42,10 @@
 - 我用这个方法解决了
 - git config --global http.postBuffer 524288000
 
+### git push 之后想要回滚怎么办？
+    - git reset --mixed HEAD~1
+    - git push origin master --force
+    - 这样本地工作区不会改变，但是远程仓库会回滚；
 
 ### 另一个电脑上把本地代码与仓库同步
     - git remote -v # 查看远程仓库
