@@ -1,6 +1,8 @@
 import numpy as np
 import torch
-
+from loss import FocalLossQb, bce_loss
+  
+    
 def map_per_image(label, predictions):
     try:
         return 1 / (predictions[:5].index(label) + 1)
@@ -20,7 +22,27 @@ def map_per_set(labels, predictions):
     return np.mean([map_per_image(l, list(p)) for l,p in zip(labels, predictions)])
 
 
-def do_valid(net, valid_loader):
+def do_valid_arcFace(net, valid_loader, device):
+    # arcFace 结果会负数吗？ logit当然可能为负，但是softmax后无所谓；
+    loss_list = []
+    label_list = []
+    prob_list = []
+    with torch.no_grad():
+        for input, truth_, in valid_loader:
+            input = input.to(device)
+            truth_ = truth_.to(device)
+            net = net.to(device)
+            logit, loss = net(input, truth_) # arcFace loss
+            _, top5_idx = logit.sigmoid().topk(5)
+            loss_list.append(loss.item())
+            label_list.extend(truth_.tolist())
+            prob_list.extend(top5_idx.tolist())
+    loss = np.mean(loss_list)
+    map_5 = map_per_set(label_list, prob_list)
+    return 0, 0, loss, map_5, label_list[:5], prob_list[:5]
+                
+    
+def do_valid(net, valid_loader, device):
     loss1_list = []
     loss2_list = []
     label_list = []
@@ -29,10 +51,10 @@ def do_valid(net, valid_loader):
         for input, truth_, in valid_loader:
             input = input.to(device)
             truth_ = truth_.to(device)
+            net = net.to(device)
             logit = net(input)
             loss1 = FocalLossQb(gamma=2)(logit, truth_)
             loss2 = bce_loss(logit, truth_)
-#             ipdb.set_trace()
             _, top5_idx = logit.sigmoid().topk(5)
             loss1_list.append(loss1.item())
             loss2_list.append(loss2.item())

@@ -1,21 +1,108 @@
 DataDir = '../data1/'
 DataListDir = '../new_whale/pic_list/'
 from torch.utils.data.dataset import Dataset
+import imgaug.augmenters as iaa
 import numpy as np
+import random
 import json
 import cv2
 import os
 import torch
+import matplotlib.pyplot as plt
 
+def order_points(pts):
+    # initialzie a list of coordinates that will be ordered
+    # such that the first entry in the list is the top-left,
+    # the second entry is the top-right, the third is the
+    # bottom-right, and the fourth is the bottom-left
+    rect = np.zeros((4, 2), dtype="float32")
+    # the top-left point will have the smallest sum, whereas
+    # the bottom-right point will have the largest sum
+    s = pts.sum(axis=1)
+    rect[0] = pts[np.argmin(s)]
+    rect[2] = pts[np.argmax(s)]
+    # now, compute the difference between the points, the
+    # top-right point will have the smallest difference,
+    # whereas the bottom-left will have the largest difference
+    diff = np.diff(pts, axis=1)
+    rect[1] = pts[np.argmin(diff)]
+    rect[3] = pts[np.argmax(diff)]
+    # return the ordered coordinates
+    return rect
+
+def four_point_transform(image, pts):
+    # obtain a consistent order of the points and unpack them
+    # individually
+    rect = order_points(pts)
+    original = np.array([[0, 0],
+                         [image.shape[1] - 1, 0],
+                         [image.shape[1] - 1, image.shape[0] - 1],
+                         [0, image.shape[0] - 1]], dtype="float32")
+    M = cv2.getPerspectiveTransform(original, rect)
+    warped = cv2.warpPerspective(image, M, (image.shape[1], image.shape[0]))
+    return warped
+
+
+def Perspective_aug(img,   threshold1 = 0.25, threshold2 = 0.75):
+    # img = cv2.imread(img_name)
+    rows, cols, ch = img.shape
+
+    x0,y0 = random.randint(0, int(cols * threshold1)), random.randint(0, int(rows * threshold1))
+    x1,y1 = random.randint(int(cols * threshold2), cols - 1), random.randint(0, int(rows * threshold1))
+    x2,y2 = random.randint(int(cols * threshold2), cols - 1), random.randint(int(rows * threshold2), rows - 1)
+    x3,y3 = random.randint(0, int(cols * threshold1)), random.randint(int(rows * threshold2), rows - 1)
+    pts = np.float32([(x0,y0),
+                      (x1,y1),
+                      (x2,y2),
+                      (x3,y3)])
+
+    warped = four_point_transform(img, pts)
+
+    x_ = np.asarray([x0, x1, x2, x3])
+    y_ = np.asarray([y0, y1, y2, y3])
+
+    min_x = np.min(x_)
+    max_x = np.max(x_)
+    min_y = np.min(y_)
+    max_y = np.max(y_)
+
+    warped = warped[min_y:max_y,min_x:max_x,:]
+    return warped
+
+def aug_image(image):
+    seq = iaa.Sequential([
+        iaa.Affine(rotate= (-15, 15),
+                   shear = (-15, 15),
+                   mode='edge'),
+
+        iaa.SomeOf((0, 2),
+                   [
+                       iaa.GaussianBlur((0, 1.5)),
+                       iaa.AdditiveGaussianNoise(loc=0, scale=(0.0, 0.01 * 255), per_channel=0.5),
+                       iaa.AddToHueAndSaturation((-5, 5)),  # change hue and saturation
+                       iaa.PiecewiseAffine(scale=(0.01, 0.03)),
+                       iaa.PerspectiveTransform(scale=(0.01, 0.1))
+                   ],
+                   random_order=True)])
+    image = seq.augment_image(image)
+    return image
 
 class WhaleData(Dataset):
-    def __init__(self, mode='train', fold_id=0, image_size=(128,256)):
+    '''
+    train: read--(augment)--(flip_fake_label)--return;
+    valid: read--(flip_fake_label)--return;
+    test: read--return;
+    '''
+    
+    def __init__(self, mode='train', fold_id=0, image_size=(128,256), augment=False, flip_label=False):
         super(WhaleData, self).__init__()
         assert fold_id in [0,1,2,3,4,5]
         assert mode in ['train', 'test', 'valid']
         self.pic_dir = '{}/train/'.format(DataDir)
         self.mode = mode
         self.image_size = image_size
+        self.augment = augment
+        self.flip_label = flip_label
         with open(DataListDir+'whale_dict.json', 'r') as f:
             self.image_label_dict = json.load(f)
         if mode == 'train':
@@ -32,6 +119,7 @@ class WhaleData(Dataset):
         if self.mode== 'test':
             pic_name = self.pic_list[index].split('\n')[0]
             image_path = DataDir+'test/' + pic_name
+            img = jpeg.JPEG(image_path).decode()
             image = cv2.imread(image_path, 1)
             image = cv2.resize(image, (self.image_size[1], self.image_size[0]))
             image = np.transpose(image, (2, 0, 1))
@@ -39,20 +127,83 @@ class WhaleData(Dataset):
             image = image.reshape([-1, self.image_size[0], self.image_size[1]])
             image = image / 255.0
             return torch.FloatTensor(image)
-        else:
-            pic_name= self.pic_list[index].split(',')[0]
-            pic_label = self.pic_list[index].split(',')[1].split('\n')[0]
+        
+        elif self.mode == 'train':
+            if (index >= len(self.pic_list)) & (self.flip_label) : 
+                origin_index = index - len(self.pic_list)
+                pic_name= self.pic_list[origin_index].split(',')[0]
+                pic_label = self.pic_list[origin_index].split(',')[1].split('\n')[0]
+                pic_label = self.image_label_dict[pic_label]
+            else:
+                pic_name= self.pic_list[index].split(',')[0]
+                pic_label = self.pic_list[index].split(',')[1].split('\n')[0]
+                pic_label = self.image_label_dict[pic_label]                
+
             image_path = DataDir+'train/' + pic_name
             image = cv2.imread(image_path, 1)
+            
+            if self.augment:
+                if random.randint(0,1) == 0:
+                    image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
+                    image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
+                if random.randint(0, 1) == 0:
+                    image = Perspective_aug(image)
+                    image = cv2.resize(image, (self.image_size[1], self.image_size[0]))
+                image = aug_image(image)
+                
+            if self.flip_label:
+                if pic_label == 5004: # if is_new_whle
+                    seq = iaa.Sequential([iaa.Fliplr(0.5)])
+                    image = seq.augment_image(image)
+                    
+                elif index >= len(self.pic_list): # 
+                    seq = iaa.Sequential([iaa.Fliplr(1.0)])
+                    image = seq.augment_image(image)
+                    pic_label += 5005
+
             image = cv2.resize(image, (self.image_size[1], self.image_size[0]))
             image = np.transpose(image, (2, 0, 1))
             image = image.astype(np.float32)
             image = image.reshape([-1, self.image_size[0], self.image_size[1]])
             image = image / 255.0
-            return torch.FloatTensor(image), self.image_label_dict[pic_label]
+            return torch.FloatTensor(image), pic_label                
+                
+        elif self.mode == 'valid':   
+            pic_name= self.pic_list[index].split(',')[0]
+            pic_label = self.pic_list[index].split(',')[1].split('\n')[0]
+            pic_label = self.image_label_dict[pic_label]
+            image_path = DataDir+'train/' + pic_name
+            image = cv2.imread(image_path, 1)
+            
+            if self.flip_label:
+                seq = iaa.Sequential([iaa.Fliplr(1.0)])
+                image = seq.augment_image(image)
+                if pic_label != 5004: 
+                    pic_label += 5005
+                    
+            image = cv2.resize(image, (self.image_size[1], self.image_size[0]))
+            image = np.transpose(image, (2, 0, 1))
+            image = image.astype(np.float32)
+            image = image.reshape([-1, self.image_size[0], self.image_size[1]])
+            image = image / 255.0
+            return torch.FloatTensor(image), pic_label
+        
+        else:
+            raise Exception('mode not available')
 
     def __len__(self):
+        if (self.flip_label) & (self.mode=='train'):
+            return len(self.pic_list)*2 # 只有train+flip 才是2倍数据；
         return len(self.pic_list)
+
+def pic_show(img):
+    img2 = img.numpy()
+    img2 = np.transpose(img2, (1, 2, 0))  # 把channel那一维放到最后
+    plt.imshow(img2)
+        
+if __name__ == '__main__':
+    WD = WhaleData(mode='train',augment=True, flip_label=False)
+    pic_show(WD[1][0])
     
     
 # # 1个训练集合, 5个验证集, 1个测试集 先存到本地；
