@@ -1,4 +1,6 @@
 # some of the torch details
+## 0. shape 计算公式：
+    H_new = [(H_old+2*pad-filter_size)/stride] + 1
 
 ## 1. 卷积函数理解
     import torch
