@@ -63,7 +63,7 @@ def multi_class_entropy(logits, labels, ignore=None):
     logits: [bs,C,H,W], C is num_class
     labels: [bs,H,W], each entry with int value in [0, C-1]
     """
-    return F.cross_entropy(logits, Variable(labels), ignore_index=255)
+    return F.cross_entropy(logits, labels.long(), ignore_index=255)
 
 
 # --------------------------- HELPER FUNCTIONS ---------------------------
