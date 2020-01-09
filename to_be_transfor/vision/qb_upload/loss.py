@@ -2,6 +2,7 @@ import torch
 from torch.autograd import Variable
 import torch.nn.functional as F
 import numpy as np
+import ipdb
 
 
 # --------------------------- MULTICLASS LOSSES ---------------------------
@@ -36,6 +37,7 @@ def lovasz_softmax_flat(probas, labels, only_present=False):
         if only_present and fg.sum() == 0:
             continue
         errors = (Variable(fg) - probas[:, c]).abs()
+#         ipdb.set_trace()
         errors_sorted, perm = torch.sort(errors, 0, descending=True)
         perm = perm.data
         fg_sorted = fg[perm]
