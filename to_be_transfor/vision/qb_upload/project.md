@@ -3,4 +3,4 @@
 
 
 1. 周四晚上结果记录；
-![dd](../pics/Jan10.png)
+![dd](./pics/Jan10.png)
