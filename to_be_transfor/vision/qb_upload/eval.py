@@ -1,4 +1,25 @@
 from data import *
+
+def mask2bbox(mask):
+    # mask:np array with shape:[H,W]
+    rows = np.any(mask, axis=1)
+    cols = np.any(mask, axis=0)
+    if (cols.sum()==0) & (rows.sum()==0):
+        return 0, 0, 0, 0
+    rmin, rmax = np.where(rows)[0][[0, -1]]
+    cmin, cmax = np.where(cols)[0][[0, -1]]
+    return cmin, rmin, cmax - cmin, rmax - rmin
+
+def mask2bbox_withscale(mask, ori_h, ori_w):
+    # mask: H,W
+    assert len(mask.shape)==2
+    h, w = mask.shape
+    fac_h, fac_w = ori_h/h, ori_w/w
+    bbox = mask2bbox(mask)
+    x, y, x_len, y_len = bbox
+    new_x, new_y, new_x_len, new_y_len = fac_w*x, fac_h*y, fac_w*x_len, fac_h*y_len
+    return new_x, new_y, new_x_len, new_y_len
+
 def iou_thresh(w, h):
     '''
     iou_thresh(120, 400)
@@ -87,13 +108,19 @@ def mAP(weight, c_pred, c_label, pred_bbox, real_bbox, img_w, img_h):
         mAp+=C_ap*weight[C]
     return mAp
     
-    
+
+def cls_map(batch_data):
+    '''把多分类的logts[bs,cls,h,w] 转化为 元素级类别矩阵[bs,h,w]; '''
+    assert batch_data.dim() == 4
+    batch_data = batch_data.softmax(1).argmax(1)
+#     plt.imshow(batch_data[0])
+    return batch_data
+
 if __name__ == '__main__':
     
     # iou
     res  = calcIOU((1, 2, 2, 2), (2, 1, 2, 2))
     print(res)
-    
     
     # ap & mAP
     c_label_list = np.random.randint(1,11,100)
@@ -121,3 +148,8 @@ if __name__ == '__main__':
     10:0.12}
     map_ = mAP(weight_dic, c_pred, c_label_list, bb1_list, bb1_list, img_w, img_h)
     print(map_)
+    
+    valid_data = Jiu3(fold_id=0, mode='valid')
+    print(mask2bbox(valid_data[3][1][0].numpy()))
+    print(mask2bbox_withscale(valid_data[3][1][0].numpy(), 492, 658))
+    print(valid_data[3][3])

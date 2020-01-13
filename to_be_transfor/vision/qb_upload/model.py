@@ -193,7 +193,7 @@ class Unet(nn.Module):
         self.logit = nn.Sequential(nn.Conv2d(320, 64, kernel_size=3, padding=1),
                                    nn.ELU(True),
                                    nn.Conv2d(64, num_class, kernel_size=1, bias=False))
-#         self.logit_image = nn.Linear(256, num_class)
+        self.logit_image = nn.Linear(256, num_class)
         
     def forward(self, x):
         # x: (batch_size, 3, 256, 256)
@@ -203,7 +203,7 @@ class Unet(nn.Module):
         e4 = self.encode4(e3)  # 256, 32, 32
         e5 = self.encode5(e4)  # 512, 16, 16
         f = self.center(e5)  # 256, 8, 8
-#         for_cls = F.adaptive_avg_pool2d(f, output_size=1) # 256
+        for_cls = F.adaptive_avg_pool2d(f, output_size=1) # 256
         d5 = self.decode5(f, e5)  # 64, 16, 16
         d4 = self.decode4(d5, e4)  # 64, 32, 32
         d3 = self.decode3(d4, e3)  # 64, 64, 64
@@ -216,9 +216,10 @@ class Unet(nn.Module):
                        F.upsample(d4, scale_factor=8, mode='bilinear', align_corners=True),
                        F.upsample(d5, scale_factor=16, mode='bilinear', align_corners=True)), 1)  # 320, 256, 256
 
-        logit = self.logit(f)  # 1, 256, 256
-#         clf = self.logit_image(for_cls.view(-1, 256)) # bs, 10
-        return logit
+        logit = self.logit(f)  # 11, 256, 256
+        clf = self.logit_image(for_cls.view(-1, 256)) # bs, 11
+        return logit, clf
+#         return logit
     
     
     
