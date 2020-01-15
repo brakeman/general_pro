@@ -6,8 +6,9 @@ import ipdb
 import numpy as np
 from torch.utils.data import Dataset
 import matplotlib.pyplot as plt
+from torch.utils.data.sampler import Sampler
 from augment import *
-
+    
 
 def do_resize(image, mask, H, W):
     '''
@@ -49,6 +50,8 @@ def train_aug(image, mask):
 annotation_path = "../chongq/chongqing1_round1_train1_20191223/annotations.json"
 img_path = './chongqing1_round1_train1_20191223/images/'
 
+
+
 class JiuData(Dataset):
     
     def __init__(self, fold_id=None, mode='train', return_ori_img=False):
@@ -83,10 +86,22 @@ class JiuData(Dataset):
         for dic in self.load_dict['images']:
             idx = dic['id']
             self.tmp_img_dic[idx] = dic
+        
+        tt_dic = {1: u'PingGaiPoSun',
+             9: 'PenMaZhengChang',
+             5: 'PingGaiDuanDian',
+             3: 'PingGaiHuaiBian',
+             4: 'PingGaiDaXuan',
+             0: 'BackGroud',
+             2: 'PingGaiBianXing',
+             8: 'BiaoTieQiPao',
+             6: 'BiaoTieWaiXie',
+             10: 'PenMaYiChang',
+             7: 'BiaoTieQiZhou'}
+        self.id2cls = tt_dic
+#         for dic in self.load_dict['categories']:
+#             self.id2cls[dic['id']] = dic['name']
             
-        self.id2cls = {}
-        for dic in self.load_dict['categories']:
-            self.id2cls[dic['id']] = dic['name']
             
     def __len__(self):
         return len(self.annotations)

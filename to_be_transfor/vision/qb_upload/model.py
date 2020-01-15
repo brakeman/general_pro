@@ -1,7 +1,142 @@
 from torch import nn
 import torch
 import ipdb
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import torchvision
+import ipdb
+    
+    
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import torchvision
+import ipdb
+    
+    
+class Fake_Spatial_SE(nn.Module):
+    '''
+    conv2d(channel_in, channel_out, kernel=(1,1))
+        # H_new = [(H_old+padding-1)/stride]+1
+        # 这一层卷积操作会是的原始feature map[bs, channel_in, H, W] --> [bs, channel_out, H, W]
+    '''
+    def __init__(self, channel, num_cls=11):
+        super(Fake_Spatial_SE, self).__init__()
+        self.squeeze = nn.Conv2d(channel, num_cls, kernel_size=1, bias=False)
+        self.sigmoid = nn.Sigmoid()
 
+    def forward(self, x):
+#         ipdb.set_trace()
+        z = self.squeeze(x) # bs, num_cls, H, W
+        z = self.sigmoid(z) # bs, num_cls, H, W
+        return z 
+    
+    
+class FakeDecoder_last(nn.Module):
+    def __init__(self, up_in, x_in, n_out=11):
+        '''
+        up_in: channel of skip conneted layer; 
+        x_in: channel of last layer;
+        n_out: channel of output;
+        '''
+        super(FakeDecoder_last, self).__init__()
+        self.x_conv = nn.Conv2d(x_in, n_out, 1, bias=False)
+        self.tr_conv = nn.ConvTranspose2d(up_in, n_out, 2, stride=2)
+        self.bn = nn.BatchNorm2d(n_out)
+        self.relu = nn.ReLU(True)
+        self.fake_sSE = Fake_Spatial_SE(channel=n_out)
+
+    def forward(self, up_p, x_p):
+#         ipdb.set_trace()
+        up_p = self.tr_conv(up_p) # [bs, 256, 8, 8] --> [bs, num_cls, 16, 16]
+        fake_sSE = self.fake_sSE(up_p) # [bs, num_cls, 16, 16]
+        x_p = self.x_conv(x_p) # [bs, 11, 8, 8] -->  [bs, num_cls, 8, 8]
+        x_p = self.tr_conv(x_p)
+        return x_p*fake_sSE # [bs, 11, 16, 16]
+    
+    
+class FakeDecoder(nn.Module):
+    def __init__(self, up_in, x_in, n_out=11):
+        '''
+        up_in: channel of skip conneted layer; 
+        x_in: channel of last layer;
+        n_out: channel of output;
+        '''
+        super(FakeDecoder, self).__init__()
+        self.x_conv = nn.Conv2d(x_in, n_out, 1, bias=False)
+        self.tr_conv = nn.ConvTranspose2d(up_in, n_out, 2, stride=2)
+        self.bn = nn.BatchNorm2d(n_out)
+        self.relu = nn.ReLU(True)
+        self.fake_sSE = Fake_Spatial_SE(channel=n_out)
+
+    def forward(self, up_p, x_p):
+#         ipdb.set_trace()
+        up_p = self.tr_conv(up_p) # [bs, 256, 8, 8] --> [bs, num_cls, 16, 16]
+        fake_sSE = self.fake_sSE(up_p) # [bs, num_cls, 16, 16]
+        x_p = self.x_conv(x_p) # [bs, 11, 16, 16] -->  [bs, num_cls, 16, 16]
+        return x_p*fake_sSE # [bs, 11, 16, 16]
+    
+
+class Unet_qb(nn.Module):
+    def __init__(self, HyperColumn, num_class=11):
+        '''
+        up_in: channel of skip conneted layer; 
+        x_in: channel of last layer;
+        n_out: channel of output;
+        '''
+        super(Unet_qb, self).__init__()
+        self.HyperColumn = HyperColumn
+        self.resnet = torchvision.models.resnet34(True)
+        self.conv1 = nn.Sequential(self.resnet.conv1, self.resnet.bn1, self.resnet.relu)
+        self.encode2 = nn.Sequential(self.resnet.layer1, Spatial_Channel_SE(64))
+        self.encode3 = nn.Sequential(self.resnet.layer2, Spatial_Channel_SE(128))
+        self.encode4 = nn.Sequential(self.resnet.layer3, Spatial_Channel_SE(256))
+        self.encode5 = nn.Sequential(self.resnet.layer4, Spatial_Channel_SE(512))
+        self.center = nn.Sequential(PyramidAttention(512, 256), nn.MaxPool2d(2, 2)) 
+        self.decode5 = FakeDecoder(256, 512, num_class)
+        self.decode4 = FakeDecoder(num_class, 256, num_class)
+        self.decode3 = FakeDecoder(num_class, 128, num_class)
+        self.decode2 = FakeDecoder(num_class, 64, num_class)
+        self.decode1 = FakeDecoder_last(num_class, 64, num_class)
+        self.logit = nn.Sequential(nn.Conv2d(55, 64, kernel_size=3, padding=1),
+                                   nn.ELU(True),
+                                   nn.Conv2d(64, num_class, kernel_size=1, bias=False))
+        
+    def forward(self, x):
+        # x: (batch_size, 3, 256, 256)
+        e1 = self.conv1(x)  # 64, 128, 128
+        e2 = self.encode2(e1)  # 64, 128, 128
+        e3 = self.encode3(e2)  # 128, 64, 64
+        e4 = self.encode4(e3)  # 256, 32, 32
+        e5 = self.encode5(e4)  # 512, 16, 16
+        f = self.center(e5)  # 256, 8, 8
+
+        d5 = self.decode5(f, e5)  # num_cls, 16, 16
+        d4 = self.decode4(d5, e4)  # num_cls, 32, 32
+        d3 = self.decode3(d4, e3)  # num_cls, 64, 64
+        d2 = self.decode2(d3, e2)  # num_cls, 128, 128
+        d1 = self.decode1(d2, e1)  # num_cls, 256, 256
+
+        clf = F.adaptive_avg_pool2d(d1, output_size = 1).squeeze()  # num_class;
+        
+        if self.HyperColumn:
+            ff = torch.cat((d1,
+               F.upsample(d2, scale_factor=2, mode='bilinear', align_corners=True),
+               F.upsample(d3, scale_factor=4, mode='bilinear', align_corners=True),
+               F.upsample(d4, scale_factor=8, mode='bilinear', align_corners=True),
+               F.upsample(d5, scale_factor=16, mode='bilinear', align_corners=True)), 1)  # 320, 256, 256
+            return self.logit(ff), clf
+        else:
+            return d1, clf
+
+# if __name__ == '__main__':
+#     Unet = Unet_qb(True)
+#     img = torch.randn(4, 3, 256, 256)
+#     logits, clf = Unet(img)
+#     print(logits.shape, clf.shape)
+    
+    
 
 class Spatial_SE(nn.Module):
     '''
