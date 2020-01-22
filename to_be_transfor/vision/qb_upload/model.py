@@ -21,9 +21,9 @@ class Fake_Spatial_SE(nn.Module):
         # H_new = [(H_old+padding-1)/stride]+1
         # 这一层卷积操作会是的原始feature map[bs, channel_in, H, W] --> [bs, channel_out, H, W]
     '''
-    def __init__(self, channel, num_cls=11):
+    def __init__(self, in_channel, out_channel):
         super(Fake_Spatial_SE, self).__init__()
-        self.squeeze = nn.Conv2d(channel, num_cls, kernel_size=1, bias=False)
+        self.squeeze = nn.Conv2d(in_channel, out_channel, kernel_size=1, bias=False)
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
@@ -34,7 +34,7 @@ class Fake_Spatial_SE(nn.Module):
     
     
 class FakeDecoder_last(nn.Module):
-    def __init__(self, up_in, x_in, n_out=11):
+    def __init__(self, up_in, x_in, n_out):
         '''
         up_in: channel of skip conneted layer; 
         x_in: channel of last layer;
@@ -45,7 +45,7 @@ class FakeDecoder_last(nn.Module):
         self.tr_conv = nn.ConvTranspose2d(up_in, n_out, 2, stride=2)
         self.bn = nn.BatchNorm2d(n_out)
         self.relu = nn.ReLU(True)
-        self.fake_sSE = Fake_Spatial_SE(channel=n_out)
+        self.fake_sSE = Fake_Spatial_SE(in_channel=n_out, out_channel=n_out)
 
     def forward(self, up_p, x_p):
 #         ipdb.set_trace()
@@ -57,7 +57,7 @@ class FakeDecoder_last(nn.Module):
     
     
 class FakeDecoder(nn.Module):
-    def __init__(self, up_in, x_in, n_out=11):
+    def __init__(self, up_in, x_in, n_out):
         '''
         up_in: channel of skip conneted layer; 
         x_in: channel of last layer;
@@ -68,7 +68,7 @@ class FakeDecoder(nn.Module):
         self.tr_conv = nn.ConvTranspose2d(up_in, n_out, 2, stride=2)
         self.bn = nn.BatchNorm2d(n_out)
         self.relu = nn.ReLU(True)
-        self.fake_sSE = Fake_Spatial_SE(channel=n_out)
+        self.fake_sSE = Fake_Spatial_SE(in_channel=n_out, out_channel=n_out)
 
     def forward(self, up_p, x_p):
 #         ipdb.set_trace()
@@ -79,7 +79,7 @@ class FakeDecoder(nn.Module):
     
 
 class Unet_qb(nn.Module):
-    def __init__(self, HyperColumn, num_class=11):
+    def __init__(self, HyperColumn, num_class):
         '''
         up_in: channel of skip conneted layer; 
         x_in: channel of last layer;
@@ -99,25 +99,36 @@ class Unet_qb(nn.Module):
         self.decode3 = FakeDecoder(num_class, 128, num_class)
         self.decode2 = FakeDecoder(num_class, 64, num_class)
         self.decode1 = FakeDecoder_last(num_class, 64, num_class)
-        self.logit = nn.Sequential(nn.Conv2d(55, 64, kernel_size=3, padding=1),
+        self.logit = nn.Sequential(nn.Conv2d(num_class*5, 64, kernel_size=3, padding=1),
                                    nn.ELU(True),
                                    nn.Conv2d(64, num_class, kernel_size=1, bias=False))
         
     def forward(self, x):
         # x: (batch_size, 3, 256, 256)
+#         print('x:{}'.format(x.shape))
         e1 = self.conv1(x)  # 64, 128, 128
+#         print('e1:{}'.format(e1.shape))
         e2 = self.encode2(e1)  # 64, 128, 128
+#         print('e2:{}'.format(e2.shape))
         e3 = self.encode3(e2)  # 128, 64, 64
+#         print('e3:{}'.format(e3.shape))
         e4 = self.encode4(e3)  # 256, 32, 32
+#         print('e4:{}'.format(e4.shape))
         e5 = self.encode5(e4)  # 512, 16, 16
+#         print('e5:{}'.format(e5.shape))
         f = self.center(e5)  # 256, 8, 8
+#         print('f:{}'.format(f.shape))
 
         d5 = self.decode5(f, e5)  # num_cls, 16, 16
+#         print('d5:{}'.format(d5.shape))
         d4 = self.decode4(d5, e4)  # num_cls, 32, 32
+#         print('d4:{}'.format(d4.shape))
         d3 = self.decode3(d4, e3)  # num_cls, 64, 64
+#         print('d3:{}'.format(d3.shape))
         d2 = self.decode2(d3, e2)  # num_cls, 128, 128
+#         print('d2:{}'.format(d2.shape))
         d1 = self.decode1(d2, e1)  # num_cls, 256, 256
-
+#         print('d1:{}'.format(d1.shape))
         clf = F.adaptive_avg_pool2d(d1, output_size = 1).squeeze()  # num_class;
         
         if self.HyperColumn:
@@ -130,11 +141,11 @@ class Unet_qb(nn.Module):
         else:
             return d1, clf
 
-# if __name__ == '__main__':
-#     Unet = Unet_qb(True)
-#     img = torch.randn(4, 3, 256, 256)
-#     logits, clf = Unet(img)
-#     print(logits.shape, clf.shape)
+if __name__ == '__main__':
+    Unet = Unet_qb(True, num_class=24)
+    img = torch.randn(4, 3, 256, 256)
+    logits, clf = Unet(img)
+    print(logits.shape, clf.shape)
     
     
 
@@ -306,7 +317,7 @@ class Decoder_last(nn.Module):
 
     
 class Unet(nn.Module):
-    def __init__(self, num_class=11):
+    def __init__(self, num_class):
         '''
         up_in: channel of skip conneted layer; 
         x_in: channel of last layer;
@@ -332,9 +343,13 @@ class Unet(nn.Module):
         
     def forward(self, x):
         # x: (batch_size, 3, 256, 256)
+        print('x:{}'.format(x.shape))
         x = self.conv1(x)  # 64, 128, 128
+        print('e1:{}'.format(x.shape))
         e2 = self.encode2(x)  # 64, 128, 128
+        print('e2:{}'.format(e2.shape))
         e3 = self.encode3(e2)  # 128, 64, 64
+        print('e3:{}'.format(e3.shape))
         e4 = self.encode4(e3)  # 256, 32, 32
         e5 = self.encode5(e4)  # 512, 16, 16
         f = self.center(e5)  # 256, 8, 8
@@ -358,34 +373,34 @@ class Unet(nn.Module):
     
     
     
-if __name__ == '__main__':
-    # scSE
-    x = torch.randn(4, 64, 128, 128)
-    sSE = Spatial_SE(channel=64)
-    cSE = Channel_SE(channel=64)
-    scSE = Spatial_Channel_SE(channel = 64)
-    r1 = sSE(x)
-    r2 = cSE(x)
-    r3 = scSE(x)
-    print(r1.shape)
-    print(r2.shape)
-    print(r3.shape)
+# if __name__ == '__main__':
+#     # scSE
+#     x = torch.randn(4, 64, 128, 128)
+#     sSE = Spatial_SE(channel=64)
+#     cSE = Channel_SE(channel=64)
+#     scSE = Spatial_Channel_SE(channel = 64)
+#     r1 = sSE(x)
+#     r2 = cSE(x)
+#     r3 = scSE(x)
+#     print(r1.shape)
+#     print(r2.shape)
+#     print(r3.shape)
     
     
-    # encoder
-    encoder = Encoder()
-    img = torch.randn(4, 3, 256, 256)
-    print(encoder(img).shape)
+#     # encoder
+#     encoder = Encoder()
+#     img = torch.randn(4, 3, 256, 256)
+#     print(encoder(img).shape)
     
     
-    # decoder
-    img_up = torch.randn(4, 256, 8, 8)
-    img = torch.randn(4, 512, 16, 16)
-    decoder = Decoder(256, 512, 64)
-    dec = decoder(img_up, img)
-    print(dec.shape)
+#     # decoder
+#     img_up = torch.randn(4, 256, 8, 8)
+#     img = torch.randn(4, 512, 16, 16)
+#     decoder = Decoder(256, 512, 64)
+#     dec = decoder(img_up, img)
+#     print(dec.shape)
 
-    # unet
-    img = torch.randn(4, 3, 256, 256)
-    unet = Unet()
-    print(unet(img)[0].shape)
+#     # unet
+#     img = torch.randn(4, 3, 256, 256)
+#     unet = Unet()
+#     print(unet(img)[0].shape)

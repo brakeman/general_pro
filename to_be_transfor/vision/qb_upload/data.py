@@ -135,7 +135,7 @@ class JiuData(Dataset):
 test_img_path = './chongqing1_round1_testA_20191223/images/'
 class JiuTest(Dataset):
     
-    def __init__(self):
+    def __init__(self, test_img_path):
         self.img_name_list = os.listdir(test_img_path)
 
 
@@ -147,8 +147,48 @@ class JiuTest(Dataset):
         img = cv2.imread(test_img_path+img_name).astype(np.float32) / 255
 #         print(img.shape)
         H,W,_ = img.shape
-        img = cv2.resize(img,dsize=(256,256))
-        return img_name, torch.from_numpy(img).permute([2,0,1]), H, W
+        img_resize = cv2.resize(img,dsize=(256,256))
+        return img_name, torch.from_numpy(img_resize).permute([2,0,1]), H, W, img
+    
+    
+img_path = './chongqing1_round1_train1_20191223/images/'
+annotation_path = "../chongq/chongqing1_round1_train1_20191223/annotations.json"
+class JiuValid(Dataset):
+    '''for epoch eval and infer upload; just try to follow what we do in test part;'''
+    
+    def __init__(self, img_path='./chongqing1_round1_train1_20191223/images/', fold_id=1):
+        self.img_name_list = os.listdir(test_img_path)
+        from sklearn.model_selection import StratifiedShuffleSplit
+        import json
+        with open(annotation_path, 'r') as load_f:
+            load_dict = json.load(load_f)
+            
+        ids = [i for i,j in enumerate(load_dict['annotations'])]
+        cls = [j['category_id'] for i,j in enumerate(load_dict['annotations'])]
+        sss = StratifiedShuffleSplit(n_splits=5, test_size=0.2, random_state=0)
+        fold_dic = {}
+        for id, index_tuple in enumerate(sss.split(ids, cls)):
+            fold_dic[id] = index_tuple 
+        self.fold_id = fold_dic[fold_id][1]
+        self.annotations = np.array(load_dict['annotations'])[self.fold_id]
+        self.tmp_img_dic = {}
+        for dic in load_dict['images']:
+            idx = dic['id']
+            self.tmp_img_dic[idx] = dic
+            
+    def __len__(self):
+        return len(self.fold_id)
+     
+    def __getitem__(self, index):
+        anno_dic = self.annotations[index]
+        img_id = anno_dic['image_id']
+        H, W, C = self.tmp_img_dic[img_id]['height'], self.tmp_img_dic[img_id]['width'], anno_dic['category_id']
+        img_name = self.tmp_img_dic[img_id]['file_name']
+        img_ori = cv2.imread(img_path+img_name).astype(np.float32) / 255
+        img_resize = cv2.resize(img_ori, dsize=(256,256)) # [H,W,3] [H,W]
+        return img_name, torch.from_numpy(img_resize).permute([2,0,1]), H, W, img_ori
+
+        
     
     
 # if __name__ == '__main__':

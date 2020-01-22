@@ -41,7 +41,7 @@ class DiceLoss2D(nn.Module):
         denominator = output + encoded_target
         denominator = denominator.sum(0).sum(1).sum(1) + eps
         loss_per_channel = torch.tensor(weights).to(self.device) * (1 - (numerator / denominator))
-        return loss_per_channel.sum() / output.size(1)
+        return loss_per_channel.sum() / output.size(0)
 
 # if __name__=='__main__':
 #     pred=torch.rand((3,6,5,5))
@@ -63,7 +63,7 @@ class FocalLoss2D_2(nn.Module):
         Focal_Loss= -1*alpha*(1-pt)*log(pt)
     """
 
-    def __init__(self, device, num_class=11, cls_weights=True, gamma=2, smooth=0.2):
+    def __init__(self, device, num_class, cls_weights=True, gamma=2, smooth=0.2):
         super(FocalLoss2D_2, self).__init__()
         self.num_class = num_class
         self.gamma = gamma
